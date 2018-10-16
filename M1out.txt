@@ -1,0 +1,61 @@
+V1
+trial E1I1D0
+  gc_rect =          (0 0 0 0)
+  inline =           |王伟认为，去欧洲旅行需要很大一笔花费。花费对他来说太高了。
+  max_display_time = 20000
+  trial_type =        experimental
+end E1I1D0
+
+trial E1I2D1
+  button =           rightTrigger
+  gc_rect =          (0 0 0 0)
+  inline =           |王伟要去欧洲旅行。 对 or 错
+  max_display_time = 20000
+  trial_type =        question
+end E1I2D1
+
+trial F3I1D0
+  gc_rect =          (0 0 0 0)
+  inline =           |王伟认为，去欧洲旅行是一笔很大的花销。花费对他来说太高了。
+  max_display_time = 20000
+  trial_type =        filler
+end F3I1D0
+
+trial F3I2D1
+  button =           leftTrigger
+  gc_rect =          (0 0 0 0)
+  inline =           |王伟认为去欧洲旅行花费很高。 对 or 错
+  max_display_time = 20000
+  trial_type =        question
+end F3I2D1
+
+trial P2I1D0
+  gc_rect =          (0 0 0 0)
+  inline =           |王伟认为，去欧洲旅行是一笔很大的开支。花费对他来说太高了。
+  max_display_time = 20000
+  trial_type =        practice
+end P2I1D0
+
+trial P2I2D1
+  button =           rightTrigger
+  gc_rect =          (0 0 0 0)
+  inline =           |王伟决定不去欧洲旅行。 对 or 错？
+  max_display_time = 20000
+  trial_type =        question
+end P2I2D1
+
+sequence SE1I2
+ E1I2D0
+ E1I2D1
+end SE1I2
+
+sequence SF3I2
+ F3I2D0
+ F3I2D1
+end SF3I2
+
+sequence SP2I2
+ P2I2D0
+ P2I2D1
+end SP2I2
+
