@@ -66,5 +66,7 @@ CondA1:CondB1 -0.3261056 0.07693112 2331.65446 -4.238929 2.333350e-05
 注意其中的 `pairwise` 参数 应该设置为 `pairwise = CondA`
 (假设只有CondA一个因素)。
 
+## 固定效应自由度的计算
+关于计算方法，以下是一些教材的汇总，在此感谢室友[包寒吴霜](https://www.zhihu.com/people/psychbruce/activities)的支持。
 
-
+[关于混合线性模型中固定效应自由度的计算](https://github.com/usplos/self-programming/blob/master/HLM%20df.docx?raw=true)
