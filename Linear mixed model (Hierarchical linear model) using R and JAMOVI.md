@@ -370,5 +370,7 @@ JAMOVI是今年火起来的，基于`R`写的统计软件，具有干净整洁�
 
 具体的操作步骤请见[附录](https://github.com/usplos/self-programming/blob/master/%E9%99%84%E5%BD%95.pdf)。
 
+## HLM/LMM自由度计算
+参考[该文件](https://github.com/usplos/self-programming/blob/master/HLM%20df.pdf)。
 
 
