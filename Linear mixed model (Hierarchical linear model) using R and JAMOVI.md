@@ -1,6 +1,6 @@
 # 混合线性模型的实现（基于R和JAMOVI）
 为什么要用混合线性模型：比如测量了不同收入水平的人群的收入和幸福感，但每个群体内收入水平是不同的，幸福感也不同，两者之间的关系也是不同的，
-如果直接用一般线性模型，会造成错误的结论（见附录），这个时候要考察的是可以推广到不同收入群体的收入和幸福感之间的关系
+如果直接用一般线性模型，会造成错误的结论（见[附录](https://github.com/usplos/self-programming/blob/master/%E9%99%84%E5%BD%95.pdf)），这个时候要考察的是可以推广到不同收入群体的收入和幸福感之间的关系
 （即考察的关系**不仅可以应用于当前的收入群体，还可以应用到其他的群体**）。这时候需要用到混合线性模型（或者层次线性模型）。
 ## `R`
 `R` 中混合线性模型要依靠`lmer`或者`lmerTest`数据包（强烈推荐后者，因为会输出显著性）
@@ -341,6 +341,23 @@ scenario = 6:
 
 看出在第7、3类场合下，不同态度的音高不同，其余的没有显著差别。
 
+### 广义混合线性模型
+`R`中做GLMM(Genaralized Lnear Mixed Model)用到的函数是:
+
+`glmer(data = , formula = , family = ,...)`
+
+其中family参数有多种不同的选择(**注意是字符型的参数**)，分别如下:
+* `binomial` - `link = “logit”`;
+* `gaussian` - `link = "identity"`;
+* `gamma` - `link = "inverse"`;
+* `inverse.gaussian` - `link = "1/mu^2"`;
+* `poisson` - `link = "log"`;
+* `quasi` - `link = "identity", variance = "constant"`;
+* `quasibinomial` - `link = "logit"`;
+* `quasipoisson` - `link = "log"`;
+
+其他的设置和`lmer()`是一样的。
+
 ## JAMOVI
 JAMOVI是今年火起来的，基于`R`写的统计软件，具有干净整洁的鼠标操纵界面和漂亮的APA格式表格图片输出，
 而且是免费、开源的，用户可根据自己的需要从library里下载相应的分析模块。
@@ -349,7 +366,7 @@ JAMOVI是今年火起来的，基于`R`写的统计软件，具有干净整洁�
 
 点击[这里](https://www.jamovi.org/library.html)了解不同的分析模块。
 
-具体的操作步骤请见附录。
+具体的操作步骤请见[附录](https://github.com/usplos/self-programming/blob/master/%E9%99%84%E5%BD%95.pdf)。
 
 
 
