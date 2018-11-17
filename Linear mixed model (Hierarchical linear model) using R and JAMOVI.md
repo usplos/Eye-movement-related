@@ -342,11 +342,13 @@ scenario = 6:
 看出在第7、3类场合下，不同态度的音高不同，其余的没有显著差别。
 
 ### 广义混合线性模型
-`R`中做GLMM(Genaralized Lnear Mixed Model)用到的函数是:
+如果因变量不服从正态分布，则需要用广义线性模型。
+
+`R`中做GLMM(Genaralized Linear Mixed Model)用到的函数是:
 
 `glmer(data = , formula = , family = ,...)`
 
-其中family参数有多种不同的选择(**注意是字符型的参数**)，分别如下:
+其中 `family = ` 有多种不同的选择(**注意是字符型的**)，分别如下:
 * `binomial` - `link = “logit”`;
 * `gaussian` - `link = "identity"`;
 * `gamma` - `link = "inverse"`;
