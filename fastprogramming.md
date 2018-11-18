@@ -33,7 +33,7 @@ Tips: 读者如果是做眼动的, 且用的是 Eye track 的, 且感兴趣的�
 
 `outputname` - 转化后, 要输出的结果的文件名(最好是`txt`文件, 否则容易出现乱码).
 
-以`M1.xlsx`为例, 执行以下命令:
+以[`M1.xlsx`](https://github.com/usplos/self-programming/raw/master/M1.xlsx)为例, 执行以下命令:
 ```
 fastprogram('/Users/balabala/Desktop',
             'M1.xlsx',
