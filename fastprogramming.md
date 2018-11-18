@@ -2,7 +2,7 @@
 Tips: 读者如果是做眼动的, 且用的是 Eye track 的, 且感兴趣的请继续阅读, 可能会有帮助; 如果不是, 就不要在这篇文章上耗费时间了
 
 ## 材料准备
-材料整理成 `M1.xlsx` 文件的格式, 各列的含义分别为：
+材料整理成 [`M1.xlsx`](https://github.com/usplos/self-programming/raw/master/M1.xlsx) 文件的格式, 各列的含义分别为：
 
 **T** - 实验材料的类别, 只能是严格的三个字符串之一,
 即是实验材料(`experimental`)还是练习材料(`practice`)还是填充材料(`filler`),
@@ -39,6 +39,6 @@ fastprogram('/Users/balabala/Desktop',
             'M1out.txt')
 ```
 
-即可在工作路径下, 输出文件`M1out.txt`.
+即可在工作路径下, 输出文件[`M1out.txt`](https://github.com/usplos/self-programming/blob/master/M1out.txt).
 
 接下来将内容复制粘贴就可以了.
