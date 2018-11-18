@@ -24,7 +24,8 @@ Tips: 读者如果是做眼动的, 且用的是 Eye track 的, 且感兴趣的�
 但是每一列代表的含义必须和上面严格对应(即第一列必须是材料的类别, 第二列必须是条件, 以此类推), 否则会出错.**
 
 ## 函数执行
-将`fastprogramming.R`文件内的代码全部执行, 以创建`fastprogram()`函数. 该函数有三个参数:
+将[`fastprogramming.R`](https://github.com/usplos/self-programming/blob/master/fastprogramming.R)
+文件内的代码全部执行, 以创建`fastprogram()`函数. 该函数有三个参数:
 
 `dirs` - 工作路径;
 
