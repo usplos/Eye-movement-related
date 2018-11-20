@@ -144,6 +144,101 @@ scenario:attitude  4985.4   830.9     6 64.011  1.3621 0.2435039
 Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
 ```
 
+### 随机斜率的取舍
+在上面建立的模型中，包含随机斜率和随机截距，但是注意到，有两个固定效应，是把两个固定效应及其交互作用全都作为随机效应，还是选其中部分作为随机效应呢？这里我们课题组的标准是：首先考虑全模型，即如下命令：
+```
+fitAll = lmer(frequency ~ scenario * attitude + (1+attitude * scenario|subject) + (1+attitude * scenario|gender), data = politeness)
+```
+结果如下，模型出现问题，观测量的个数小于随机因子的个数。
+```
+错误: number of observations (=83) <= number of random effects (=84) for term (1 + attitude * scenario | subject); 
+the random-effects parameters and the residual variance (or scale parameter) are probably unidentifiable
+```
+移除交互作用后，模型如下：
+```
+fitAll2 = lmer(frequency ~ scenario * attitude + (1+attitude + scenario|subject) + (1+attitude + scenario|gender), data = politeness)
+```
+结果如下，模型无法收敛，这说明还需要调整模型
+```
+Warning messages:
+1: In commonArgs(par, fn, control, environment()) :
+  maxfun < 10 * length(par)^2 is not recommended.
+2: In optwrap(optimizer, devfun, getStart(start, rho$lower, rho$pp),  :
+  convergence code 1 from bobyqa: bobyqa -- maximum number of function evaluations exceeded
+```
+下一步，要选择移除哪一个随机因子，以及移除`subject`还是`gender`上的随机因子，于是有四种模型：
+```
+fitAll3_1 = lmer(frequency ~ scenario * attitude + (1+attitude|subject) + (1+attitude + scenario|gender), data = politeness);
+fitAll3_2 = lmer(frequency ~ scenario * attitude + (1+scenario|subject) + (1+attitude + scenario|gender), data = politeness);
+fitAll3_3 = lmer(frequency ~ scenario * attitude + (1+attitude+ scenario|subject) + (1+attitude|gender), data = politeness);
+fitAll3_4 = lmer(frequency ~ scenario * attitude + (1+attitude + scenario|subject) + (1+scenario|gender), data = politeness)
+```
+同时要建立一个零模型（只有随机截距）：
+```
+fitZero = lmer(frequency ~ scenario * attitude + (1|subject) + (1|gender), data = politeness)
+```
+接下来依次比较零模型和以上的四个模型，用到的是`anova()`函数：
+```
+anova(fitZero, fitAll3_1)
+
+# Result
+Data: politeness
+Models:
+object: frequency ~ scenario * attitude + (1 | subject) + (1 | gender)
+..1: frequency ~ scenario * attitude + (1 + attitude | subject) + 
+..1:     (1 + attitude + scenario | gender)
+       Df    AIC     BIC  logLik deviance  Chisq Chi Df Pr(>Chisq)
+object 17 811.33  852.45 -388.66   777.33                         
+..1    54 872.74 1003.35 -382.37   764.74 12.592     37     0.9999
+```
+```
+anova(fitZero, fitAll3_2)
+
+# Result
+Data: politeness
+Models:
+object: frequency ~ scenario * attitude + (1 | subject) + (1 | gender)
+..1: frequency ~ scenario * attitude + (1 + scenario | subject) + 
+..1:     (1 + attitude + scenario | gender)
+       Df    AIC     BIC  logLik deviance  Chisq Chi Df Pr(>Chisq)
+object 17 811.33  852.45 -388.66   777.33                         
+..1    79 910.46 1101.55 -376.23   752.46 24.863     62          1
+```
+```
+anova(fitZero, fitAll3_3)
+
+# Result
+Data: politeness
+Models:
+object: frequency ~ scenario * attitude + (1 | subject) + (1 | gender)
+..1: frequency ~ scenario * attitude + (1 + attitude + scenario | 
+..1:     subject) + (1 + attitude | gender)
+       Df    AIC    BIC  logLik deviance  Chisq Chi Df Pr(>Chisq)
+object 17 811.33 852.45 -388.66   777.33                         
+..1    54 867.53 998.14 -379.76   759.53 17.802     37     0.9968
+```
+```
+anova(fitZero, fitAll3_4)
+
+#Result
+Data: politeness
+Models:
+object: frequency ~ scenario * attitude + (1 | subject) + (1 | gender)
+..1: frequency ~ scenario * attitude + (1 + attitude + scenario | 
+..1:     subject) + (1 + scenario | gender)
+       Df    AIC     BIC  logLik deviance  Chisq Chi Df Pr(>Chisq)
+object 17 811.33  852.45 -388.66   777.33                         
+..1    79 913.52 1104.61 -377.76   755.52 21.806     62          1
+```
+结果四个模型和零模型都不显著，这种情况下，选取p值最小的模型，即`fitAll3_3`，**虽然包含随机斜率的模型和不包含随机斜率的模型无明显差异，但是仍然要考虑随机斜率，因为实验中的被试只是个样本，不能保证样本之外的个体随机斜率也没有影响。**
+
+目前暂定的标准是：
+* **优先考虑随机斜率**
+* **优先考虑全模型**
+* **舍弃或削减模型的标准是该模型不能收敛，或者自由度溢出**
+* **优先削减交互作用的随机效应**
+* **当遇到需削减同水平位置的随机因子时（比如两个随机因子需要舍弃一个时），应考虑所有情况，并将其和零模型作比较；优先保留与零模型有显著差异的模型；当比较都不显著时，优先考虑保留p较小的模型**
+
 ### 调整固定因子比较基线
 上面的固定效应的结果中，是以`scenario`的第一个水平作为基线，如果想人为设置比较基线，最稳定的方法是用`factor(..., levels = )`重新编码因子，
 并设置水平的顺序，这里将最后一个水平设为基线：
