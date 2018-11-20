@@ -1,4 +1,4 @@
-*文本档读者可自行修改补充，修改时请注意使用[Markdown的语法](https://www.cnblogs.com/yabin/p/6366151.html)。*
+*文本档读者登录GitHub后可自行修改补充，修改时请注意使用[Markdown的语法](https://www.cnblogs.com/yabin/p/6366151.html)。*
 
 # 混合线性模型的实现（基于R和JAMOVI）
 为什么要用混合线性模型：比如测量了不同收入水平的人群的收入和幸福感，但每个群体内收入水平是不同的，幸福感也不同，两者之间的关系也是不同的，
