@@ -1,3 +1,5 @@
+*文本档读者可自行修改补充，修改时请注意使用[Markdown的语法](https://www.cnblogs.com/yabin/p/6366151.html)。*
+
 # 混合线性模型的实现（基于R和JAMOVI）
 为什么要用混合线性模型：比如测量了不同收入水平的人群的收入和幸福感，但每个群体内收入水平是不同的，幸福感也不同，两者之间的关系也是不同的，
 如果直接用一般线性模型，会造成错误的结论（见[附录](https://github.com/usplos/self-programming/blob/master/%E9%99%84%E5%BD%95.pdf)），这个时候要考察的是可以推广到不同收入群体的收入和幸福感之间的关系
@@ -467,5 +469,3 @@ JAMOVI是今年火起来的，基于`R`写的统计软件，具有干净整洁�
 
 ## HLM/LMM自由度计算
 参考[该文件](https://github.com/usplos/self-programming/blob/master/HLM%20df.pdf)。
-
-
