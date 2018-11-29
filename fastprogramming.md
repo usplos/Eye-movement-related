@@ -33,11 +33,15 @@ Tips: 读者如果是做眼动的, 且用的是 Eye track 的, 且感兴趣的�
 
 `outputname` - 转化后, 要输出的结果的文件名(最好是`txt`文件, 否则容易出现乱码).
 
+`seq` - 默认为`T`, 表示材料和问题分为两个trial呈现，如果合在一个trial中呈现, 请设置为F.
+
 以[`M1.xlsx`](https://github.com/usplos/self-programming/raw/master/M1.xlsx)为例, 执行以下命令:
 ```
 fastprogram('/Users/balabala/Desktop',
             'M1.xlsx',
-            'M1out.txt')
+            'M1out.txt',
+            #seq = T
+            )
 ```
 
 即可在工作路径下, 输出文件[`M1out.txt`](https://github.com/usplos/self-programming/blob/master/M1out.txt).
