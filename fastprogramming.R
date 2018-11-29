@@ -1,4 +1,4 @@
-fastprogram = function(dirs,inputname, outputname)
+fastprogram = function(dirs,inputname, outputname, seq = T)
 {
   #dirs - a string of the working direction
   #inputname - a string of the file name of the file you want to transform
@@ -60,34 +60,38 @@ fastprogram = function(dirs,inputname, outputname)
     }
   }
   SEQ = which(rawdata$D == 1)
-  for(i in SEQ)
+  if(seq == T)
   {
-    temp = rawdata[i,]
-    temp1 = temp[1,1]
-    V1 = paste('sequence S',
-               ifelse(temp1 == "experimental", "E", ifelse(temp1 == "practice"  , "P", "F")),
-               temp[1,2],"I", 
-               temp[1,3],
-               sep = "")
-    V2 = paste(' ',
-               ifelse(temp1 == "experimental", "E", ifelse(temp1 == "practice"  , "P", "F")),
-               temp[1,2],"I", 
-               temp[1,3],"D0",
-               sep = '')
-    V3 = paste(' ',
-               ifelse(temp1 == "experimental", "E", ifelse(temp1 == "practice"  , "P", "F")),
-               temp[1,2],"I", 
-               temp[1,3],"D1",
-               sep = '')
-    V4 = paste('end S',
-               ifelse(temp1 == "experimental", "E", ifelse(temp1 == "practice"  , "P", "F")),
-               temp[1,2],"I", 
-               temp[1,3],
-               sep = "")
-    output = rbind(output, V1, V2, V3, V4, "")
+    for(i in SEQ)
+    {
+      temp = rawdata[i,]
+      temp1 = temp[1,1]
+      V1 = paste('sequence S',
+                 ifelse(temp1 == "experimental", "E", ifelse(temp1 == "practice"  , "P", "F")),
+                 temp[1,2],"I", 
+                 temp[1,3],
+                 sep = "")
+      V2 = paste(' ',
+                 ifelse(temp1 == "experimental", "E", ifelse(temp1 == "practice"  , "P", "F")),
+                 temp[1,2],"I", 
+                 temp[1,3],"D0",
+                 sep = '')
+      V3 = paste(' ',
+                 ifelse(temp1 == "experimental", "E", ifelse(temp1 == "practice"  , "P", "F")),
+                 temp[1,2],"I", 
+                 temp[1,3],"D1",
+                 sep = '')
+      V4 = paste('end S',
+                 ifelse(temp1 == "experimental", "E", ifelse(temp1 == "practice"  , "P", "F")),
+                 temp[1,2],"I", 
+                 temp[1,3],
+                 sep = "")
+      output = rbind(output, V1, V2, V3, V4, "")
+    }
   }
   write.csv(output,outputname,row.names = F,quote = F)
 }
+# if you are not sure whether your R version or RStudio version can library fgui package, please do not run the codes below
 if(sum(unique(installed.packages()[,c('Package')] %in% 'fgui')) == 0)
 {install.packages('fgui')}
 library(fgui)
