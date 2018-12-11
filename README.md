@@ -10,3 +10,5 @@
 
 ## 混合线性模型的实现（R与JAMOVI）
 参见[`Linear mixed model (Hierarchical linear model) using R and JAMOVI.md`](https://github.com/usplos/self-programming/blob/master/Linear%20mixed%20model%20(Hierarchical%20linear%20model)%20using%20R%20and%20JAMOVI.md)
+
+## 眼动数据的生存分析
