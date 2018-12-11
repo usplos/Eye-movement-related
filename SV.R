@@ -16,23 +16,22 @@ SV = function(Data, bootstrapNumber = 10000, perbinMax = 600, perbinMin = 0, bas
   PackageCheck('tibble');
   PackageCheck('ggplot2');
   PackageCheck('readr')
-  
   ############ calculate
   library(dplyr);library(purrr);library(tidyr);library(tibble);library(readr);library(ggplot2);
   DataRaw = read_csv(Data)
-  SubjectUnique = unique(DataRaw[[1]]);CondUnique = unique(DataRaw[[2]])
+  CondUnique = unique(DataRaw[[2]])
   
-  for(i in CondUnique)
-  {
+  for(i in CondUnique){
     eval(parse(text = paste(i,'perbin = matrix(0,nrow = bootstrapNumber, ncol = perbinMax-perbinMin+1)', sep = '')))
   }
   
-  for(condition in CondUnique)
-  {
+  for(condition in CondUnique){
     CondTemp = matrix(0, nrow = bootstrapNumber, ncol = perbinMax - perbinMin+1)
+    DataRawSS = filter(DataRaw ,DataRaw[[2]] %in% condition)
+    SubjectUnique = unique(DataRawSS[[1]])
     for(subject in SubjectUnique)
     {
-      DataRawS = DataRaw %>% filter(subj %in% subject) %>% filter(cond %in% condition)
+      DataRawS = DataRawSS %>% filter(DataRawSS[[1]] %in% subject)
       SubCondTemp = matrix(0, nrow = bootstrapNumber, ncol = perbinMax - perbinMin+1)
       for (i in 1:bootstrapNumber) 
         {
@@ -54,7 +53,6 @@ SV = function(Data, bootstrapNumber = 10000, perbinMax = 600, perbinMin = 0, bas
     cat(condition, ' is done\n###############################################################\n')
   }
   
-  ################ compare and calculate time point
     CondCompare = eval(parse(text = paste(CondUnique[-1 * which(CondUnique %in% baseline)],'perbin - ', baseline,'perbin', sep = '')));
     Differ = numeric(perbinMax - perbinMin +1)
     for(i in 1:(perbinMax - perbinMin +1))
@@ -69,7 +67,6 @@ SV = function(Data, bootstrapNumber = 10000, perbinMax = 600, perbinMin = 0, bas
         check = 1;break
       }
     }
-  ############ plot
     if(check == 1)
     {
       cat('The first time point is ',TimePoint,' ms.\n')
@@ -82,6 +79,7 @@ SV = function(Data, bootstrapNumber = 10000, perbinMax = 600, perbinMin = 0, bas
       }
       
       eval(parse(text = paste('file = tibble(',baseline,' = ',baseline,'perbinA',', ',CondUnique[-1 * which(CondUnique %in% baseline)],' = ',CondUnique[-1 * which(CondUnique %in% baseline)], 'perbinA)',sep = '')))
+      
       eval(parse(text = 'filename = paste(substr(Data, 1, nchar(Data)-4),\'_\',baseline, CondUnique[-1 * which(CondUnique %in% baseline)], \'.csv\',sep = \'\')'))
       write_csv(file, filename);write_csv(tibble(TIMEPOINT = TimePoint), paste(Xlab,'_TimePoint.csv',sep = ''))
       eval(parse(text = paste('plot(',CondUnique[-1 * which(CondUnique %in% baseline)],'perbinA,type = \'l\', xlim = c(perbinMin, perbinMax), ylim = c(0,1), xlab = Xlab, ylab = Ylab)', sep = '')))
