@@ -90,5 +90,3 @@ SV = function(Data, bootstrapNumber = 10000, perbinMax = 600, perbinMin = 0, bas
     }
   
 }
-SV(Data = 'Demo.csv', bootstrapNumber = 200, perbinMin = 1, perbinMax = 600, baseline = 'C1',
-   Xlab = 'First FIxation Duration (ms)', Ylab = 'Survival')
