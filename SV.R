@@ -16,6 +16,7 @@ SV = function(Data, bootstrapNumber = 10000, perbinMax = 600, perbinMin = 0, bas
   PackageCheck('tibble');
   PackageCheck('ggplot2');
   PackageCheck('readr')
+  
   ############ calculate
   library(dplyr);library(purrr);library(tidyr);library(tibble);library(readr);library(ggplot2);
   DataRaw = read_csv(Data)
@@ -53,6 +54,7 @@ SV = function(Data, bootstrapNumber = 10000, perbinMax = 600, perbinMin = 0, bas
     cat(condition, ' is done\n###############################################################\n')
   }
   
+  ################ compare and calculate time point
     CondCompare = eval(parse(text = paste(CondUnique[-1 * which(CondUnique %in% baseline)],'perbin - ', baseline,'perbin', sep = '')));
     Differ = numeric(perbinMax - perbinMin +1)
     for(i in 1:(perbinMax - perbinMin +1))
@@ -67,6 +69,7 @@ SV = function(Data, bootstrapNumber = 10000, perbinMax = 600, perbinMin = 0, bas
         check = 1;break
       }
     }
+  ############ plot
     if(check == 1)
     {
       cat('The first time point is ',TimePoint,' ms.\n')
