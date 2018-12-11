@@ -19,7 +19,7 @@ SV = function(Data, bootstrapNumber = 10000, perbinMax = 600, perbinMin = 0, bas
   ############ calculate
   library(dplyr);library(purrr);library(tidyr);library(tibble);library(readr);library(ggplot2);
   DataRaw = read_csv(Data)
-  SubjectUnique = unique(DataRaw$subj);CondUnique = unique(DataRaw$cond)
+  SubjectUnique = unique(DataRaw[[1]]);CondUnique = unique(DataRaw[[2]])
   
   for(i in CondUnique)
   {
