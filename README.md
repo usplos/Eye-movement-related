@@ -12,3 +12,5 @@
 参见[`Linear mixed model (Hierarchical linear model) using R and JAMOVI.md`](https://github.com/usplos/self-programming/blob/master/Linear%20mixed%20model%20(Hierarchical%20linear%20model)%20using%20R%20and%20JAMOVI.md)
 
 ## 眼动数据的生存分析
+
+参见[Survival Analysis based on Eye Movement Measures.md](https://github.com/usplos/self-programming/blob/master/Survival%20Analysis%20based%20on%20Eye%20Movement%20Measures.md)
