@@ -81,7 +81,7 @@ SV = function(Data, bootstrapNumber = 10000, perbinMax = 600, perbinMin = 0, bas
       eval(parse(text = paste('file = tibble(',baseline,' = ',baseline,'perbinA',', ',CondUnique[-1 * which(CondUnique %in% baseline)],' = ',CondUnique[-1 * which(CondUnique %in% baseline)], 'perbinA)',sep = '')))
       
       eval(parse(text = 'filename = paste(substr(Data, 1, nchar(Data)-4),\'_\',baseline, CondUnique[-1 * which(CondUnique %in% baseline)], \'.csv\',sep = \'\')'))
-      write_csv(file, filename);write_csv(tibble(TIMEPOINT = TimePoint), paste(Xlab,'_TimePoint.csv',sep = ''))
+      write_csv(file, filename);write_csv(tibble(TIMEPOINT = TimePoint), paste(substr(Data,1,nchar(Data)-4),'_TimePoint.csv',sep = ''))
       eval(parse(text = paste('plot(',CondUnique[-1 * which(CondUnique %in% baseline)],'perbinA,type = \'l\', xlim = c(perbinMin, perbinMax), ylim = c(0,1), xlab = Xlab, ylab = Ylab)', sep = '')))
       eval(parse(text = paste('lines(',baseline,'perbinA, lty = 2)', sep = '')))
       eval(parse(text = paste('legend(perbinMax-(perbinMax-perbinMin)/5, 0.95, legend =c(\'',CondUnique[-1 * which(CondUnique %in% baseline)],'\',\'',baseline,'\'), lty = c(1,2))',sep = '')))
