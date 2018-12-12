@@ -7,7 +7,7 @@
 以创建SV函数.
 
 将数据（这里以首次注视时间为例）整理成[`DemoDataSV.csv`](https://raw.githubusercontent.com/usplos/self-programming/master/DemoDataSV.csv)
-的样式。
+的样式，第一列为被试的编号，第二列为条件的编号，第三列为具体的值。**注意：三列的列名可随意，但是相对位置要固定，即第一列必须为被试，第二列为条件**
 
 ## 参数
 `SV( )`中的参数如下：
@@ -15,9 +15,9 @@
 * `bootstrapNumber` - 整数型，重抽样的次数，默认10000；
 * `perbinMax` - 整数型，bin的最大值，默认600；
 * `perbinMin` - 整数型，bin的最小值，默认0；
-* `basline` - 字符型，要比较的基线条件的名字；
-* `Ylab` - 字符型，生存分析图的纵坐标标签；
-* `Xlab` - 字符型，生存分析图的横坐标标签；
+* `basline` - 字符型，要比较的基线条件的编号；
+* `Ylab` - 字符型，生存分析图的纵坐标标签，默认'DV'；
+* `Xlab` - 字符型，生存分析图的横坐标标签，默认'IV'；
 
 ## 示例
 以[`DemoDataSV.csv`](https://raw.githubusercontent.com/usplos/self-programming/master/DemoDataSV.csv)为例，
