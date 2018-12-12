@@ -1,6 +1,6 @@
 # 眼动数据的生存分析
 
-*可以对眼动的时间指标进行生存分析，比如首次注视时间，凝视时间等*
+*下面介绍的函数可以对眼动的时间指标进行生存分析，比如首次注视时间，凝视时间等*
 
 ## 前期准备
 请将[`SV.R`](https://raw.githubusercontent.com/usplos/self-programming/master/SV.R)文件内的全部代码拷贝到`RStudio`中执行，
