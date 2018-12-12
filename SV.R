@@ -1,5 +1,6 @@
 SV = function(Data, bootstrapNumber = 10000, perbinMax = 600, perbinMin = 0, baseline,
-              Ylab = 'DV', Xlab = 'IV', xp = perbinMax-(perbinMax-perbinMin)/5, Cex = 0.8, Bty = 'n')
+              Ylab = 'DV', Xlab = 'IV', xp = perbinMax-(perbinMax-perbinMin)/5, Cex = 0.8, Bty = 'n',
+             Width = 680, Height = 370)
 {
   ########### package check
   PackageCheck = function(Name)
@@ -82,11 +83,13 @@ SV = function(Data, bootstrapNumber = 10000, perbinMax = 600, perbinMin = 0, bas
       
       eval(parse(text = 'filename = paste(substr(Data, 1, nchar(Data)-4),\'_\',baseline, CondUnique[-1 * which(CondUnique %in% baseline)], \'.csv\',sep = \'\')'))
       write_csv(file, filename);write_csv(tibble(TIMEPOINT = TimePoint), paste(substr(Data,1,nchar(Data)-4),'_TimePoint.csv',sep = ''))
+      bmp(paste(substr(Data, 1, nchar(Data)-4), '.bmp',sep = ''), width = Width, height = Height)
       eval(parse(text = paste('plot(',CondUnique[-1 * which(CondUnique %in% baseline)],'perbinA,type = \'l\', xlim = c(perbinMin, perbinMax), ylim = c(0,1), xlab = Xlab, ylab = Ylab)', sep = '')))
       eval(parse(text = paste('lines(',baseline,'perbinA, lty = 2)', sep = '')))
       eval(parse(text = paste('legend(xp, 0.95, cex = Cex, bty = Bty, legend =c(\'',CondUnique[-1 * which(CondUnique %in% baseline)],'\',\'',baseline,'\'), lty = c(1,2))',sep = '')))
       eval(parse(text = paste('abline(v = TimePoint, lty = 6)')))
       eval(parse(text = paste('text(x = TimePoint-45, y = 0.1, \'x = ',TimePoint,'\')', sep = '')))
+      dev.off()
       cat('Survival analysis is finished\n')
     }
     if(check == 0)
