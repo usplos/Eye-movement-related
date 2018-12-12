@@ -27,8 +27,63 @@
 SV(Data = 'DemoDataSV.csv', bootstrapNumber = 200, perbinMin = 1, perbinMax = 600, baseline = 'C1',
     Xlab = 'First FIxation Duration (ms)', Ylab = 'Survival')
 ```
+**如果没有发现分离点**，会输出以下命令：
+```
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+Want to understand how all the pieces fit together? Buy the ggplot2 book:
+http://ggplot2.org/book/
+Parsed with column specification:
+cols(
+  subj = col_character(),
+  cond = col_character(),
+  DV = col_integer()
+)
+S1  is done
+S10  is done
+C1  is done
+###############################################################
+S1  is done
+S10  is done
+C3  is done
+###############################################################
+There is no seperation.
+Survival analysis is finished
+ ################# ################# #################
+```
+**如果发现分离点**，会输出以下结果：
+```
+...
+###############################################################
+The first time point is  275  ms.
+Survival analysis is finished
+```
+同时会输出以下的**生存分析图**：
+
+![生存分析图](https://github.com/usplos/self-programming/blob/master/SurvivalPlot.png)
+
+还会输出以下两个文件：`DemoDataSV_C1C3.csv`，`DemoDataSV_TimePoing.csv`。文件名的命名规则分别是
+
+`<原始数据文件名前缀><_><条件1><条件2><.csv>`
+
+`<原始数据文件名前缀><_><TimePoint><.csv>`
+
+前者储存绘图所用的两个条件的数据，后者储存分离点的信息。因为有时候条件的名字太长，绘图不美观，
+因此输出了原始数据，用户可根据具体的数据绘图。
+
+
+
 
 ## 注意
+* 耗时较长，如果抽样次数为10000(一般为10000次)，perbin的范围设为0到600，一个被试的一个条件的数据大概需要2分钟，如果有20名被试，大概需要80分钟。如果要处理的数据过多，建议用`mapply()`这样的泛函数或循环，晚上休息时来做...
 * 仅适用于两条件的比较
 * 条件的值的类型为字符型
 * 需要安装以下数据包，虽然此函数会检查是否含有这些包（如果没有会先下载），但考虑到RStudio程序本身的问题，可事先安装好
