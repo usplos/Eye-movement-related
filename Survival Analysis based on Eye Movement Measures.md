@@ -27,7 +27,10 @@
 SV(Data = 'DemoDataSV.csv', bootstrapNumber = 200, perbinMin = 1, perbinMax = 600, baseline = 'C1',
     Xlab = 'First FIxation Duration (ms)', Ylab = 'Survival')
 ```
-**如果没有发现分离点**，会输出以下命令：
+
+### 如果没有发现分离点
+
+会输出以下结果：
 ```
 Attaching package: ‘dplyr’
 
@@ -59,7 +62,10 @@ There is no seperation.
 Survival analysis is finished
  ################# ################# #################
 ```
-**如果发现分离点**，会输出以下结果：
+
+### 如果发现分离点
+
+会输出以下结果：
 ```
 ...
 ###############################################################
