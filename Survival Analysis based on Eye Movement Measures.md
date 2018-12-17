@@ -3,8 +3,10 @@
 *下面介绍的函数可以对眼动的时间指标进行生存分析，比如首次注视时间，凝视时间等*
 
 ## 前期准备
-请将[`SV.R`](https://raw.githubusercontent.com/usplos/self-programming/master/SV.R)文件内的全部代码拷贝到`RStudio`中执行，
-以创建SV函数.
+执行下面的命令，创建`SV()`函数
+```
+eval(parse(text = getURL('https://raw.githubusercontent.com/usplos/self-programming/master/SV.R')))
+```
 
 将数据（这里以首次注视时间为例）整理成[`DemoDataSV.csv`](https://raw.githubusercontent.com/usplos/self-programming/master/DemoDataSV.csv)
 的样式，第一列为被试的编号，第二列为条件的编号，第三列为具体的值。**注意：三列的列名可随意，但是相对位置要固定，即第一列必须为被试，第二列为条件**
