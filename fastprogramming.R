@@ -91,8 +91,4 @@ fastprogram = function(dirs,inputname, outputname, seq = T)
   }
   write.csv(output,outputname,row.names = F,quote = F)
 }
-# if you are not sure whether your R version or RStudio version can library fgui package, please do not run the codes below
-if(sum(unique(installed.packages()[,c('Package')] %in% 'fgui')) == 0)
-{install.packages('fgui')}
-library(fgui)
-res = gui(fastprogram)
+
