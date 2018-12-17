@@ -5,6 +5,7 @@
 ## 前期准备
 执行下面的命令，创建`SV()`函数
 ```
+library(RCurl)
 eval(parse(text = getURL('https://raw.githubusercontent.com/usplos/self-programming/master/SV.R')))
 ```
 
