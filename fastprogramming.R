@@ -59,9 +59,10 @@ fastprogram = function(dirs,inputname, outputname, seq = T)
       output = rbind(output,V1,V7,V2,V3,V4,V5,V6,"")
     }
   }
-  SEQ = which(rawdata$D == 1)
+  
   if(seq == T)
   {
+    SEQ = which(rawdata$D == 1)
     for(i in SEQ)
     {
       temp = rawdata[i,]
