@@ -903,8 +903,11 @@ funSkipRate <- function(outputdir)
     filter(ROI0 == T) %>% 
     group_by(sub0, cond0, item0) %>% 
     summarise(ffd0Mean = mean(ffd0)) %>% 
-    mutate(skipRate = ifelse(ffd0Mean > 0, 1,0)) %>% 
-    select(-ffd0Mean) %>% 
+    mutate(Sub = sub0,
+           Cond = cond0,
+           Item = item0,
+           skiprate = ifelse(ffd0Mean > 0, 1,0)) %>% 
+    select(Sub, Cond, Item, skiprate) %>% 
     write_csv('ROISkipRate.csv')
   cat('Skip Rate is done!!!\n\n')
 }
