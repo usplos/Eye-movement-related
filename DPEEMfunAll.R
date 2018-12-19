@@ -442,7 +442,7 @@ funpreprocess <-
     
   }
 
-###### FFD & TT
+###### FFD & TT Refined
 funROITTFFD <-
   function(outputdir)
   {
@@ -453,35 +453,20 @@ funROITTFFD <-
     
     cat('Calculating the first fixation duration and total time...\n')
     
-    FTtotalASR = read.csv(paste(outputdir, 'FTtotalASR.csv',sep = '/'), stringsAsFactors = F)
-    sub0 = c()
-    item0 = c()
-    cond0 = c()
-    totaltime0 = c()
-    fft0 = c()
-    subindex = unique(FTtotalASR$sub)
-    for(i in subindex)
-    {
-      tempsub = FTtotalASR[FTtotalASR$sub0 %in% i,]
-      itemindex = unique(tempsub$item0)
-      for(j in itemindex)
-      {
-        tempitem = tempsub[tempsub$item0 %in% j,]
-        sub0 = c(sub0, i)
-        item0 = c(item0, j)
-        cond0 = c(cond0, unique(tempitem$cond0)[[1]])
-        totaltime0 = c(totaltime0, sum(tempitem$FFT))
-        fft0 = c(fft0, ifelse(is.null(tempitem$FFT[[1]]),0,tempitem$FFT[[1]]))
-      }
-      cat(i,' has been done!!!!','\n')
-    }
-    totaltime_fft = data.frame(Sub = sub0, Item = item0, Cond = cond0, TotalTime = totaltime0, FFD = fft0, stringsAsFactors = F)
-    write.csv(totaltime_fft, paste(outputdir,'ROItotaltime&fft.csv', sep = '/'), row.names = F, quote = F)
+    read_csv('FTtotalASRptReg.csv') %>% 
+    mutate(Sub = sub0, Cond = cond0, Item = item0) %>%
+    filter(ROI0 == T) %>% 
+    group_by(Sub, Cond, Item) %>% 
+    mutate(ROIFI = 1:length(FFT)) %>% 
+    select(-xcoor0, -ycoor0, -Tstart0, -Tend0) %>% 
+    summarise(TotalTime = sum(FFT), FFD = FFT[ROIFI == 1]) %>%
+    write_csv('ROITT&FFD.csv')
+    
     cat('Totaltime and first fixation duration have been done','\n\n')
     
   }
 
-###### ROInum
+###### ROInum refined
 funFTROInum <-
   function(outputdir)
   {
@@ -492,36 +477,18 @@ funFTROInum <-
     
     cat('Calculating the number of fixation potint in ROI...\n')
     
-    FTtotalAS = read.csv(paste(outputdir, 'FTtotalAS.csv', sep = '/'), stringsAsFactors = F)
-    Sub = c()
-    Item = c()
-    Cond = c()
-    ROIFixationnum = c()
-    ROIFixationprop = c()
-    subindex = unique(FTtotalAS$sub)
-    for(i in subindex)
-    {
-      tempsub = FTtotalAS[FTtotalAS$sub0 %in% i,]
-      itemindex = unique(tempsub$item0)
-      for(j in itemindex)
-      {
-        tempitem = tempsub[tempsub$item0 %in% j,]
-        Sub=c(Sub,i)
-        Item = c(Item,j)
-        Cond = c(Cond, unique(tempitem$cond0)[[1]])
-        tempitem2 = tempitem[tempitem$ROI0 == T,]
-        ROIFixationnum = c(ROIFixationnum, nrow(tempitem2))
-        ROIFixationprop = c(ROIFixationprop, nrow(tempitem2)/nrow(tempitem))
-      }
-      cat(i,' has been done','\n')
-    }
-    FTROInum = data.frame(Sub, Item, Cond, ROIFixationnum, ROIFixationprop)
-    write.csv(FTROInum,paste(outputdir,'ROIFTnum.csv',sep = '/'),row.names = F,quote = F)
+    read_csv('FTtotalASRptReg.csv') %>% 
+    mutate(Sub = sub0, Cond = cond0, Item = item0) %>%
+    group_by(Sub, Cond, Item) %>% 
+    summarise(FixationNum = length(ROI0[ROI0 == T]), 
+            FixationProp = length(ROI0[ROI0 == T])/length(ROI0)) %>%
+    write_csv('ROIFTnum.csv')
+    
     cat('FTROInum.csv has been produced','\n\n')
     
   }
 
-###### fixationprop
+###### fixationprop refined
 funROIfixationprop <-
   function(outputdir)
   {
@@ -532,43 +499,14 @@ funROIfixationprop <-
     
     cat('Calculating the fixation proportion...\n')
     
-    FTtotalASRptReg = read.csv(paste(outputdir, 'FTtotalASRptReg.csv', sep = '/'), stringsAsFactors = F)
-    Sub = c()
-    Item = c()
-    Cond = c()
-    FixationProp = c()
-    subindex = unique(FTtotalASRptReg$sub)
-    for(i in subindex)
-    {
-      tempsub = FTtotalASRptReg[FTtotalASRptReg$sub0 %in% i,]
-      itemindex = unique(tempsub$item0)
-      for(j in itemindex)
-      {
-        tempitem = tempsub[tempsub$item0 %in% j,]
-        Sub=c(Sub,i)
-        Item = c(Item,j)
-        Cond = c(Cond, unique(tempitem$cond0)[[1]])
-        FFTposition = which(tempitem$passtimes == 1)[1]
-        if(is.na(FFTposition))
-        {
-          FixationProp = c(FixationProp,0)
-        }
-        else
-        {
-          if(max(tempitem$finalcoor[1:(FFTposition-1)]) < tempitem$finalcoor[FFTposition])
-          {
-            FixationProp = c(FixationProp,1)
-          }
-          else
-          {
-            FixationProp = c(FixationProp,0)
-          }
-        }
-      }
-      cat(i,'has been done!!!','\n')
-    }
-    ROIfixationprop = data.frame(Sub,Item,Cond,FixationProp, stringsAsFactors = F)
-    write.csv(ROIfixationprop, paste(outputdir,'ROIfixationprop.csv', sep = '/'), row.names = F, quote = F)
+    read_csv('FTtotalASRptReg.csv') %>% 
+    mutate(Sub = sub0, Cond = cond0, Item = item0) %>%
+    filter(ROI0 == T) %>%
+    group_by(Sub, Cond, Item) %>% 
+    mutate(FixationIndex = 1:length(ROI0)) %>%
+    summarise(FixationProp = length(ffd0[FixationIndex == 1 & ffd0 == T])) %>%
+    write_csv('ROIFixationProp.csv')
+
     cat('ROI fixation proportion has been done','\n\n')
     
   }
@@ -584,36 +522,13 @@ funROIgazeduration <-
     
     cat('Calculating the first pass time...\n')
     
-    FTtotalASRptReg = read.csv(paste(outputdir,'FTtotalASRptReg.csv', sep = '/'), stringsAsFactors = F)
-    Sub = c()
-    Item = c()
-    Cond = c()
-    GazeDuration = c()
-    subindex = unique(FTtotalASRptReg$sub)
-    for(i in subindex)
-    {
-      tempsub = FTtotalASRptReg[FTtotalASRptReg$sub0 %in% i,]
-      itemindex = unique(tempsub$item0)
-      for(j in itemindex)
-      {
-        tempitem = tempsub[tempsub$item0 %in% j,]
-        Sub=c(Sub,i)
-        Item = c(Item,j)
-        Cond = c(Cond, unique(tempitem$cond0)[[1]])
-        tempsecFT = tempitem[tempitem$passtimes %in% 1,]
-        if(is.na(tempsecFT$FFT[1]))
-        {
-          GazeDuration = c(GazeDuration,0)
-        }
-        else
-        {
-          GazeDuration = c(GazeDuration, sum(tempsecFT$FFT))
-        }
-      }
-      cat(i,' has been done!!!','\n')
-    }
-    ROIgazeduration = data.frame(Sub, Item, Cond, GazeDuration, stringsAsFactors = F)
-    write.csv(ROIgazeduration, paste(outputdir,'ROIgazeduration.csv', sep = '/'), row.names = F, quote = F)
+    read_csv('FTtotalASRptReg.csv') %>% 
+  mutate(Sub = sub0, Cond = cond0, Item = item0) %>%
+  filter(passtimes == 1) %>%
+  group_by(Sub, Cond, Item) %>% 
+  summarise(GazeDuration = sum(FFT)) %>%
+  write_csv('ROIGazeDuration.csv')
+
     cat('ROI gaze duration has been done','\n\n')
     
   }
