@@ -907,7 +907,7 @@ funSkipRate <- function(outputdir)
            Cond = cond0,
            Item = item0,
            skiprate = ifelse(ffd0Mean > 0, 1,0)) %>% 
-    select(Sub, Cond, Item, skiprate) %>% 
+    select(-sub0, -cond0, -item0, -ffdMean) %>% 
     write_csv('ROISkipRate.csv')
   cat('Skip Rate is done!!!\n\n')
 }
