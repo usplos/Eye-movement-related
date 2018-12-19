@@ -1066,7 +1066,7 @@ funGUI <-
                                FTnum = c('T','F'), GazeDuration = c('T','F'),
                                Regression = c('T','F'), SaccadeLength = c('T','F'),
                                SecondPassTime = c('T','F'), FixationProportion = c('T','F'),
-                               SkipRate = c('T', 'F')
+                               SkipRate = c('T', 'F'),
                                DataIntegrate = c('T','F')),
               #argEdit = list(FDMax = NULL, FDMin = NULL),
               title = 'DPEEM')
