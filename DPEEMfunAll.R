@@ -6,6 +6,14 @@ PackageCheck = function(Name)
     install.packages(Name)
   }
 }
+PackageCheck('dplyr');
+PackageCheck('purrr');
+PackageCheck('tidyr');
+PackageCheck('tibble');
+PackageCheck('ggplot2');
+PackageCheck('readr')
+
+library(dplyr);library(purrr);library(tidyr);library(tibble);library(readr);library(ggplot2);
 
 ##### SV
 funSV = function(Data, bootstrapNumber = 10000, perbinMax = 600, perbinMin = 0, baseline,
@@ -21,14 +29,6 @@ funSV = function(Data, bootstrapNumber = 10000, perbinMax = 600, perbinMin = 0, 
     }
   }
   
-  PackageCheck('dplyr');
-  PackageCheck('purrr');
-  PackageCheck('tidyr');
-  PackageCheck('tibble');
-  PackageCheck('ggplot2');
-  PackageCheck('readr')
-  ############ calculate
-  library(dplyr);library(purrr);library(tidyr);library(tibble);library(readr);library(ggplot2);
   DataRaw = read_csv(Data)
   CondUnique = unique(DataRaw[[2]])
   
@@ -897,16 +897,7 @@ funSkipRate <- function(outputdir)
 {
   cat('Calculating the skip rate...\n')
   
-  PackageCheck('dplyr');
-  PackageCheck('purrr');
-  PackageCheck('tidyr');
-  PackageCheck('tibble');
-  PackageCheck('ggplot2');
-  PackageCheck('readr')
-  
   FTtotalASRptReg = read.csv(paste(outputdir, 'FTtotalASRptReg.csv', sep = '/'), stringsAsFactors = F)
-
-  library(dplyr);library(purrr);library(tidyr);library(tibble);library(readr);library(ggplot2);
 
   FTtotalASRptReg %>% 
     filter(ROI0 == T) %>% 
