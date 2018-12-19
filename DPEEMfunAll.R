@@ -1027,6 +1027,7 @@ funIntegrate <-
           
           setwd(i)
           datafilename = dir(pattern = 'ROI[a-zA-Z]')
+          datafilename = datafilename[grep('.csv', datafilename)]
           Totalposition = grep('ROI[Tt]otal.csv',datafilename)
           if(length(Totalposition) > 0)
           {datafilename = datafilename[-1*Totalposition]}
@@ -1065,6 +1066,7 @@ funGUI <-
                                FTnum = c('T','F'), GazeDuration = c('T','F'),
                                Regression = c('T','F'), SaccadeLength = c('T','F'),
                                SecondPassTime = c('T','F'), FixationProportion = c('T','F'),
+                               SkipRate = c('T', 'F')
                                DataIntegrate = c('T','F')),
               #argEdit = list(FDMax = NULL, FDMin = NULL),
               title = 'DPEEM')
