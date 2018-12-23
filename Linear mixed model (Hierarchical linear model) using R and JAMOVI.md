@@ -30,6 +30,7 @@ library(lmerTest)
 
 ### 数据整理形式
 数据整理可参考`data1`：
+
 <img src = 'https://github.com/usplos/self-programming/blob/master/data1.png'>
 
 
@@ -179,7 +180,7 @@ Number of obs: 183, groups:  Item, 64; Sub, 3
 
 注意：1. 如果Corr的值如果为1，代表过度拟合了（有时大于0.9也被视为过度拟合），这时候需要将对应的随机斜率从模型中去掉；2. 过度拟合会导致模型的随机效应部分出现共线性，因此要查看Corr的结果，并将过度拟合的斜率去掉（**Corr在0.9以上视为过度拟合**）。
 
-总结起来，**第三步：去除全模型中随机效应里过度拟合的斜率(Barr D. J., 2013)。**这里需要注意，这里的例子里只有三名被试的数据，因此随机斜率的Corr会很大，基本上都是1，但是真实的数据分析中，
+总结起来， **第三步：去除全模型中随机效应里过度拟合的斜率(Barr D. J., 2013)。** 这里需要注意，这里的例子里只有三名被试的数据，因此随机斜率的Corr会很大，基本上都是1，但是真实的数据分析中，
 * 会出现介于0.9到1之间的Corr，0.9以上的可以认定为过度拟合；
 * 可能会出现多个过度拟合的值，比如上面的6个Corr全是1，这种情况下：
   1. 先删除最高阶的交互作用，因为只要有最高阶的交互作用，删除其他作用对模型没有影响(Barr D. J., 2013)；
@@ -431,7 +432,9 @@ A1B1              1              0
 A1B2             -1              0
 A2B1              0              1
 A2B2              0             -1
+```
 
+```
 fit1 = lmer(data = data1, FFD ~ Cond + (1|Sub) + (1|Item), contrasts = list(Cond = CMS))
 summary(fit1)
 
@@ -481,7 +484,9 @@ A1B1              1              0
 A1B2              0              1
 A2B1             -1              0
 A2B2              0             -1
+```
 
+```
 fit1 = lmer(data = data1, FFD ~ Cond + (1|Sub) + (1|Item), contrasts = list(Cond = CMS2))
 summary(fit1)
 
@@ -536,6 +541,7 @@ CndSmplOCB2  0.012 -0.002
 
 我们常用的是二项分布 (`binomial`) 和正态分布 (`gaussian`)，其余的很少见，所以不做介绍了
 其他参数设置和`lmer()`是一样的。这里我们以兴趣区接受回视的情况为例，数据如下：
+
 <img src = 'https://github.com/usplos/self-programming/blob/master/regin.png'>
 
 建立模型如下：
