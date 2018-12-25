@@ -21,7 +21,7 @@ eval(parse(text = getURL('https://raw.githubusercontent.com/usplos/self-programm
 * `basline` - 字符型，要比较的基线条件的编号；
 * `Ylab` - 字符型，生存分析图的纵坐标标签，默认'DV'；
 * `Xlab` - 字符型，生存分析图的横坐标标签，默认'IV'；
-* `xp` - 数值型，生存分析图标记时间点分离点的x坐标，默认为`perbinMax-(perbinMax-perbinMin)/5`；
+* `xp` - 数值型，生存分析图图例的x坐标，默认为`perbinMax-(perbinMax-perbinMin)/5`；
 * `Cex` - 数值型，一般介于0 - 1，生存分析图图例字体大小, 默认0.8；
 * `Bty` - 字符型，是否画图例的边框，取值为`'o'`或`'n'`，默认`'n'`
 * `Width` - 数值型，图片的宽度，默认680；
