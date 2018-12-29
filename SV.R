@@ -90,6 +90,11 @@ SV = function(Data, bootstrapNumber = 10000, perbinMax = 600, perbinMin = 0, bas
       eval(parse(text = paste('abline(v = TimePoint, lty = 6)')))
       eval(parse(text = paste('text(x = TimePoint-45, y = 0.1, \'x = ',TimePoint,'\')', sep = '')))
       dev.off()
+      eval(parse(text = paste('plot(',CondUnique[-1 * which(CondUnique %in% baseline)],'perbinA,type = \'l\', xlim = c(perbinMin, perbinMax), ylim = c(0,1), xlab = Xlab, ylab = Ylab)', sep = '')))
+      eval(parse(text = paste('lines(',baseline,'perbinA, lty = 2)', sep = '')))
+      eval(parse(text = paste('legend(xp, 0.95, cex = Cex, bty = Bty, legend =c(\'',CondUnique[-1 * which(CondUnique %in% baseline)],'\',\'',baseline,'\'), lty = c(1,2))',sep = '')))
+      eval(parse(text = paste('abline(v = TimePoint, lty = 6)')))
+      eval(parse(text = paste('text(x = TimePoint-45, y = 0.1, \'x = ',TimePoint,'\')', sep = '')))
       cat('Survival analysis is finished\n')
     }
     if(check == 0)
