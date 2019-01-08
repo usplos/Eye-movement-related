@@ -49,7 +49,7 @@ library(lmerTest)
 建立模型，用`summary()`函数查看结果， 这里需要注意：
 * 如果自变量是群体（个体）间的设计，就不能添加随机斜率，这里的两个条件是被试内的，所以可以设置为随机斜率，而像年龄（每个被试只有一个确定的年龄）、性别（被试不可能既是男的又是女的）等变量不可以作为随机斜率；
 * 如果设置随机效应，模型可能无法收敛或者自由度溢出(见 《随机斜率的取舍》部分)，这个时候需要调整或者取消随机效应；
-* 一般只加`Sub`的斜率，`Item`只加随机截距，因为固定因子和因变量间的关系在不同项目间的差异是较小的，但是这种关系在不同被试间的差异是比较大的：
+* 一般同时加`Sub`和`Item`的斜率，但是固定因子和因变量间的关系在不同项目间的差异是较小的，而在不同被试间的差异是比较大的，所以在模型无法收敛时，可以采取优先舍掉`Item`上斜率的方法（暂定）：
 
 ```
 fit1 = lmer(data = data1, FFD ~ CondA * CondB + (1 + CondA*CondB | Sub) + (1|Item))
@@ -108,7 +108,7 @@ Random effects:
 Number of obs: 183, groups:  Item, 64; Sub, 3     
 ```
 
-固定效应的结果如下，这里是把`A1` 和 `B1`分别设为`CondA`和`CondB`的基线，然后`A2` 和 `B2` 分别和对应的基线比较。
+固定效应的结果如下，这里是把`A1` 和 `B1`分别设为`CondA`和`CondB`的基线，然后`CondAA2`这一行的意思是`CondA`在`CondB`的`B1`条件下的主效应，也就是简单主效应，同理`CondBB2`也是在`CondA`的`A1`条件下的简单主效应。
 
 ```
 Fixed effects:
@@ -136,7 +136,7 @@ CondB          157     157     1  4.03   0.015   0.91
 CondA:CondB     15      15     1  8.04   0.002   0.97
 ```
 
-汇报结果的一般顺序是：1. 主效应和交互作用；2. 如果主效应或者交互作用显著，再汇报`contrasts`的结果，但是像这里每个因素只有两个水平，因此因素内`contrasts`的结果和主效应的结果是一样的；3.如果交互作用显著则需要进行简单效应分析。
+汇报结果的一般顺序是：1. 主效应和交互作用；2. 如果主效应或者交互作用显著，再汇报`contrasts`的结果，但是像这里每个因素只有两个水平，因此当比较矩阵设置恰当的时候，因素内`contrasts`的结果和主效应的结果是一样的（比较矩阵的设置方法见下文）；3.如果交互作用显著则需要进行简单效应分析。
 
 ### 随机斜率的取舍
 在上面建立的模型中，包含随机斜率和随机截距，但是有两个问题：
@@ -144,7 +144,7 @@ CondA:CondB     15      15     1  8.04   0.002   0.97
 * 选取的模型可能无法收敛或者自由度溢出，这时如何简化模型？
   1. 无法收敛的情况：当输出下面的warning的时候，说明模型无法收敛，这时候需要简化模型，使其收敛：
   <img src = 'https://github.com/usplos/self-programming/blob/master/warning.png'>
-  2. 自由度溢出的情况：当输出下面的错误时，说明自由度溢出（一般只Item上只有随机截距，因此这个问题几乎不会出现），这时候也需要简化模型，使其收敛：
+  2. 自由度溢出的情况：当输出下面的错误时，说明自由度溢出（有时`summary()`输出的结果没有p值，也是模型无法收敛导致的），这时候也需要简化模型，使其收敛：
   <img src = 'https://github.com/usplos/self-programming/blob/master/freedom.png'>
 
 针对自由度溢出，需要**将错误提示里的随机斜率剔除**即可。
@@ -520,6 +520,19 @@ Correlation of Fixed Effects:
             (Intr) CSOCB1
 CndSmplOCB1  0.014       
 CndSmplOCB2  0.012 -0.002
+```
+
+上面我们说到，`summary()`出来的结果不是主效应，而是简单主效应，但是我们也可已通过设置`contrasts`矩阵获得真正的主效应。
+比如想比较`CondA`和`CondB`的主效应：
+```
+cmCondA = matrix(c(-1,1), nrow = 2)
+rownames(cmCondA) = levels(data1$CondA)
+colnames(cmCondA) = 'MainA'
+```
+同理可设置`CondB`的矩阵，然后建模如下：
+```
+fit1 = lmer(data = data1, FFD ~ CondA*CondB + (1|Sub) + (1|Item), contrasts = list(CondA = cmCondA, CondB = cmCondB))
+summary(fit1)
 ```
 
 ### 广义混合线性模型
