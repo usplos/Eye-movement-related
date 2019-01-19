@@ -165,7 +165,9 @@ funpreprocess <-
     for(i in csvfilename)
     {
       tempsubfile = read.csv(i, sep = ' ', header = F)
-      
+      if(ncol(tempsubfile) <2){
+        tempsubfile = read.csv(i, sep = '\t', header = F)
+      }
       for(j in 1:nrow(tempsubfile))
       {
         templine = tempsubfile[j,]
