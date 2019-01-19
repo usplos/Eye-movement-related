@@ -215,7 +215,7 @@ funpreprocess <-
     {
       FTtotal$cond0[i] = FTtotal$cond0[i-1]
     }
-    largeitemp = which(FTtotal$item0 > 99)
+    largeitemp = which(FTtotal$item0 >= 199)
     for(i in largeitemp)
     {
       FTtotal$item0[i] = FTtotal$item0[i-1]
