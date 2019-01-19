@@ -172,9 +172,9 @@ funpreprocess <-
       {
         templine = tempsubfile[j,]
         templine = templine[,!is.na(templine)]
-        if(ncol(templine) > 8 | templine[[3]] > 99)
+        if(ncol(templine) > 8 | templine[[3]] > 199)
         {
-          if(templine[[3]] < 99)
+          if(templine[[3]] < 199)
           {
             numberfixation = (ncol(templine)-8)/4
             
