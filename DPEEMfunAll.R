@@ -829,6 +829,74 @@ funSkipRate <- function(outputdir)
   cat('Skip Rate is done!!!\n\n')
 }
 
+###### regression out position
+Regressionoutto = function(workdir = getwd()){
+  setwd(workdir)
+  library(readr)
+  FTtotalASRptReg <- read_csv("FTtotalASRptReg.csv")
+  subsetcoor = function(df){
+    check = F
+    ps1 = which(df$passtimes %in% 1)
+    if(length(ps1) > 0){ps1 = ps1[length(ps1)]+1; check = T
+    ps2 = which(df$passtimes %in% 2)
+    ps2 = ifelse(length(ps2) != 0, ps2[1], nrow(df))
+    
+    if(isTRUE(check) & ps2 >= ps1){
+      subdf = df[ps1:ps2,]
+      posi = which(subdf$sacdir %in% 'back')
+      if(length(posi)!=0 & nrow(subdf) > 1){
+        if(posi[length(posi)] < nrow(subdf)){
+          posi = posi[[1]]
+          return(subdf$xcoor0[[posi+1]] + 160*subdf$ycoor0[[posi+1]])
+        }else(return(-1))
+      }else{return(-1)}
+    }else{return(-1)}
+    }else{return(-1)}
+  }
+
+  subsetROI = function(df){
+    check = F
+    ps1 = which(df$passtimes %in% 1)
+    if(length(ps1) > 0){ps1 = ps1[length(ps1)]+1; check = T
+    ps2 = which(df$passtimes %in% 2)
+    ps2 = ifelse(length(ps2) != 0, ps2[1], nrow(df))
+    
+    if(isTRUE(check) & ps2 >= ps1){
+      subdf = df[ps1:ps2,]
+      posi = which(subdf$sacdir %in% 'back')
+      if(length(posi)!=0 & nrow(subdf) > 1 ){
+        if(posi[length(posi)] < nrow(subdf)){
+          posi = posi[[1]]
+          return(subdf$ROI0[[posi+1]])
+        }else{return(F)}
+      }else{return(F)}
+    }else{return(F)}
+    }else{return(F)}
+  }
+  
+  subsetinte = function(df){
+    a = tibble(Sub = df$sub0[[1]],
+               Cond = df$cond0[[1]],
+               Item = df$item0[[1]],
+               coor = subsetcoor(df),
+                ROI = subsetROI(df))
+    return(a)
+  }
+  regressionoutto = tibble();df = FTtotalASRptReg;
+  for (sub1 in unique(df$sub0)) {
+    dfsub = df %>% filter(sub0 %in% sub1)
+    for (cond1 in unique(dfsub$cond0)) {
+      dfsubcond = dfsub %>% filter(cond0 %in% cond1)
+      for (item1 in unique(dfsubcond$item0)) {
+        dfsubconditem = dfsubcond %>% filter(item0 %in% item1)
+        regressionoutto = rbind(regressionoutto, subsetinte(dfsubconditem))
+      }
+    }
+  }
+
+  write_csv(regressionoutto, 'regressionoutto.csv')
+}
+
 ###### integrate
 funIntegrate <-
   function(workdir = getwd(),
