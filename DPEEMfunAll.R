@@ -831,13 +831,14 @@ funSkipRate <- function(outputdir)
 
 ###### regression out position
 Regressionoutto = function(workdir = getwd()){
+  cat('Calculating regression out position...\n')
   setwd(workdir)
   library(readr)
   FTtotalASRptReg <- read_csv("FTtotalASRptReg.csv")
   subsetcoor = function(df){
     check = F
     ps1 = which(df$passtimes %in% 1)
-    if(length(ps1) > 0){ps1 = ps1[length(ps1)]+1; check = T
+    if(length(ps1) > 0){ps1 = ps1[length(ps1)]; check = T
     ps2 = which(df$passtimes %in% 2)
     ps2 = ifelse(length(ps2) != 0, ps2[1], nrow(df))
     
@@ -853,11 +854,11 @@ Regressionoutto = function(workdir = getwd()){
     }else{return(-1)}
     }else{return(-1)}
   }
-
+  
   subsetROI = function(df){
     check = F
     ps1 = which(df$passtimes %in% 1)
-    if(length(ps1) > 0){ps1 = ps1[length(ps1)]+1; check = T
+    if(length(ps1) > 0){ps1 = ps1[length(ps1)]; check = T
     ps2 = which(df$passtimes %in% 2)
     ps2 = ifelse(length(ps2) != 0, ps2[1], nrow(df))
     
@@ -879,7 +880,7 @@ Regressionoutto = function(workdir = getwd()){
                Cond = df$cond0[[1]],
                Item = df$item0[[1]],
                coor = subsetcoor(df),
-                ROI = subsetROI(df))
+               ROI = subsetROI(df))
     return(a)
   }
   regressionoutto = tibble();df = FTtotalASRptReg;
@@ -892,10 +893,13 @@ Regressionoutto = function(workdir = getwd()){
         regressionoutto = rbind(regressionoutto, subsetinte(dfsubconditem))
       }
     }
+    cat(sub1,' is done...\n')
   }
-
+  
   write_csv(regressionoutto, 'regressionoutto.csv')
+  cat('regression out position is done!!\n')
 }
+
 
 ###### integrate
 funIntegrate <-
