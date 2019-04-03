@@ -14,3 +14,7 @@
 ## 眼动数据的生存分析
 
 参见[`Survival Analysis based on Eye Movement Measures.md`](https://github.com/usplos/self-programming/blob/master/Survival%20Analysis%20based%20on%20Eye%20Movement%20Measures.md)
+
+## 单因素、两因素、三因素的条形图和交互作用图绘制
+
+参见[`Custom barplot and interactionplot.md`](https://github.com/usplos/self-programming/blob/master/Custom%20barplot%20and%20interactionplot.md)
