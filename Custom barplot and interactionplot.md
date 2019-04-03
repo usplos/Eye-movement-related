@@ -27,8 +27,7 @@
 执行以下代码：
 ```
 Demo = read_csv('https://raw.githubusercontent.com/usplos/self-programming/master/DemoCustomPlot.csv?token=AVnuGktnsOlSxKPsA78qjMwhiVaeJareks5cpCNJwA%3D%3D')
-library(RCurl)
-eval(parse(text = getURL('https://raw.githubusercontent.com/usplos/self-programming/master/CustomPlot.R?token=AVnuGgkgsWzCVUNcffwcmW04a44fzfB0ks5cpCTMwA%3D%3D')))
+source('https://raw.githubusercontent.com/usplos/self-programming/master/CustomPlot.R?token=AVnuGgkgsWzCVUNcffwcmW04a44fzfB0ks5cpCTMwA%3D%3D')
 p = BarplotUniV(df = Demo, DeName = 'FFD', IndeName = 'CondA', Dot = F)
 ```
 输出图片：
