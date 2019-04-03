@@ -59,7 +59,7 @@ BarplotBiV = function(df, IndeName, DeName,Fill = c('red','blue'), Dot = F, Alph
   print(p);return(p)
 }
 
-InteractionplotUniV = function(df, IndeName, DeName,Dot = F, Alpha = 0.2, Color = c('red','blue'),Dodge = 0.5, PColor = 'black'){
+InteractionplotBiV = function(df, IndeName, DeName,Dot = F, Alpha = 0.2, Color = c('red','blue'),Dodge = 0.5, PColor = 'black'){
   if(!require(tidyverse)){install.packages('tidyverse')}
   library(tidyverse)
   IndeName1 = IndeName[[1]];IndeName2 = IndeName[[2]]
