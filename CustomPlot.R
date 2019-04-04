@@ -101,13 +101,6 @@ InteractionplotBiV = function(df, IndeName, DeName,Dot = F, Alpha = 0.2, Color =
   print(p);return(p)
 }
 
-DemoTriV = read_csv('DemoCustomPlotTriV.csv')
-DemoTriV = within(DemoTriV,{
-  CondA = factor(CondA)
-  CondB = factor(CondB)
-  CondC = factor(CondC)
-})
-
 BarplotTriV = function(df, IndeName, DeName,Fill = c('red','blue'), Colnum = 2, Dot = F, Alpha = 0.2, Color = 'black', Dodge = 0.5){
   if(!require(tidyverse)){install.packages('tidyverse')}
   library(tidyverse)
