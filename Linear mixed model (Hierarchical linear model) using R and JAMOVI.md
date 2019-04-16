@@ -178,10 +178,45 @@ Random effects:
 Number of obs: 183, groups:  Item, 64; Sub, 3
 ```
 
+可以看到有很多相关接近1或-1，表明模型过度拟合，这是应该精简模型的随机斜率。
+
+过度拟合有时是模型无法收敛的原因，有时不是，比如下面这种情况（模型可以收敛）：
+```
+> modelFFD = lmer(data = data1, FFD ~ CondA * CondB + (1 + CondA | Sub) + (1 | Item))
+boundary (singular) fit: see ?isSingular
+```
+
+显示模型为奇异拟合状态，此时用`isSingular()`函数查看一下，确实为奇异拟合
+```
+> isSingular(modelFFD)
+[1] TRUE
+```
+
+出现以上的情况（无论模型是否收敛），是因为方差协方差矩阵的一些“维度”被估计为零，对于纯截距模型等标量随机效应，或截距+斜率模型等二维随机效应，奇点相对容易检测，因为它导致随机效应方差估计（接近）为零，或（几乎）精确到-1或1的相关性估计。这时检查一下该模型的随机效应部分，会发现某一个或几个的随机斜率的相关估计等于（或接近1或-1）：
+```
+> summary(modelFFD)
+Linear mixed model fit by REML. t-tests use Satterthwaite's method ['lmerModLmerTest']
+Formula: FFD ~ CondA * CondB + (1 + CondA | Sub) + (1 | Item)
+   Data: data1
+
+REML criterion at convergence: 2208.2
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-1.8854 -0.6309 -0.2353  0.4429  3.3676 
+
+Random effects:
+ Groups   Name        Variance Std.Dev. Corr 
+ Item     (Intercept)  1621.21  40.264       
+ Sub      (Intercept)   232.76  15.257       
+          CondA1         68.61   8.283  -1.00
+```
+
 注意：1. 如果Corr的值如果为1，代表过度拟合了（有时大于0.9也被视为过度拟合），这时候需要将对应的随机斜率从模型中去掉；2. 过度拟合会导致模型的随机效应部分出现共线性，因此要查看Corr的结果，并将过度拟合的斜率去掉（**Corr在0.9以上视为过度拟合**）。
 
 总结起来， **第三步：去除全模型中随机效应里过度拟合的斜率(Barr D. J., 2013)。** 这里需要注意，这里的例子里只有三名被试的数据，因此随机斜率的Corr会很大，基本上都是1，但是真实的数据分析中，
 * 会出现介于0.9到1之间的Corr，0.9以上的可以认定为过度拟合；
+* 是否为过度拟合应该用`isSingular()`函数检测一下，以免遗漏；
 * 可能会出现多个过度拟合的值，比如上面的6个Corr全是1，这种情况下：
   1. 先删除最高阶的交互作用，因为只要有最高阶的交互作用，删除其他作用对模型没有影响(Barr D. J., 2013)；
   2. 删除交互作用后，如果仍不能收敛，请继续删除，这时如果两个主效应的Corr都大于0.9，请先删除Corr较大的那个；
@@ -207,6 +242,7 @@ object  7 2247 2270  -1117     2233
 ```
 
 看到，两个模型之间没有显著差别 (`p > 0.05` 即可，一般去除过度拟合的成分后的模型和全模型都没有显著差别)，简化后的模型为最终采用的模型。
+
 
 
 ### 调整固定因子比较基线
