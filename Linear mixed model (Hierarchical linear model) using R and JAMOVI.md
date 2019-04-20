@@ -572,6 +572,12 @@ fit1 = lmer(data = data1, FFD ~ CondA*CondB + (1|Sub) + (1|Item), contrasts = li
 summary(fit1)
 ```
 
+此外，如果想获取某个条件（如`CondA`）的两个水平之间的差异，可以通过分别将`CondA`和`CondB`设置为不同的对比方式来实现
+```
+fit1 = lmer(data = data1, FFD ~ CondA*CondB + (1|Sub) + (1|Item), contrasts = list(CondA = c(0,1), CondB = c(-1,1)))
+summary(fit1)
+```
+
 ### 广义混合线性模型
 如果因变量不是连续变量，比如兴趣区内是否接受回视、是否从兴趣区内发出回视、是否跳读兴趣区等等，则需要用广义线性模型。
 
