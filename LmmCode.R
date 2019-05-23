@@ -109,7 +109,7 @@ LmmCode = function(df=NULL, DV=NULL, IV=NULL, Cluster=NULL, output = '', Ifrun =
       tic = Sys.time()
       eval(parse(text = aa))
       aaa = paste0('Anovatable_',output)
-      eval(parse(text = paste0(aaa,' %>% as_tibble(rownames = NA) %>% write_csv(',aaa,'.csv)')))
+      eval(parse(text = paste0(aaa,' %>% as_tibble(rownames = NA) %>% write.csv(\'',aaa,'.csv\' ,row.names = T, quote = F)')))
       cat('Model comparison is done\n\n')
       Sys.time() - tic
     }
