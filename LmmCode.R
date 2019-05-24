@@ -104,13 +104,17 @@ LmmCode = function(df=NULL, DV=NULL, IV=NULL, Cluster=NULL, output = '', Ifrun =
     cat('Model running finished\n\n')
     if(isTRUE(Ifanova)){
       cat('\n################################################################\n\nModel comparison is doing...\n\n')
-      a = ls()[grep(pattern = 'M.I[0-9]', ls())] %>% paste(.,collapse = ', ')
-      aa = paste0('Anovatable_',output,' = anova(',a,')')
-      tic = Sys.time()
-      eval(parse(text = aa))
-      aaa = paste0('Anovatable_',output)
-      eval(parse(text = paste0(aaa,' %>% as_tibble(rownames = NA) %>% write.csv(\'',aaa,'.csv\' ,row.names = T, quote = F)')))
-      cat('Model comparison is done\n\n')
+      a = ls()[grep(pattern = 'M.I[0-9]', ls())]
+      M.AIC = numeric(length = length(a))
+      M.BIC = numeric(length = length(a))
+      Is.Singular = logical(length = length(a))
+      for (ii in 1:length(a)) {
+        M.AIC[ii] = AIC(eval(parse(text = a[ii])))
+        M.BIC[ii] = BIC(eval(parse(text = a[ii])))
+        Is.Singular[ii] = isSingular(eval(parse(text = a[ii])))
+      }
+      df = tibble(Modelname = a, M.AIC, M.BIC, Is.Singular) %>% write_csv(paste0('Anovatable',output,'.csv'))
+      cat('Anova is done\n\n')
       Sys.time() - tic
     }
   }
