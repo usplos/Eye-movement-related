@@ -99,7 +99,9 @@ LmmCode = function(df=NULL, DV=NULL, IV=NULL, Cluster=NULL, output = '', Ifrun =
     for (mm in Mcode) {
       tic = Sys.time()
       eval(parse(text = mm))
-      cat(mm,' is done/n', Sys.time() - tic, '\n')
+      cat(which(Mcode %in% mm)/length(Mcode)*100,'% is done/n')
+      Sys.time() - tic
+      cat('\n')
     }
     cat('Model running finished\n\n')
     if(isTRUE(Ifanova)){
