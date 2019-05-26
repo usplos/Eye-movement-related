@@ -113,7 +113,7 @@ LMMRun_Once = function(df, Formula, Family=NULL){
   }
 }
 
-LMMRun_Parallel = function(df, DV=NULL, IV=NULL, Cluster=NULL, Ifrun = F,
+LMMRun_Parallel = function(df, DV=NULL, IV=NULL, Cluster=NULL, Ifrun = F, output = NULL,
                    Manual = F, Manualcodefilename = NULL, Ncore = 4, Family = NULL){
 
   library(lmerTest)
@@ -162,7 +162,7 @@ LMMRun_Parallel = function(df, DV=NULL, IV=NULL, Cluster=NULL, Ifrun = F,
                         'Family','Formulas'), envir = environment())
     Results.DF <- do.call('rbind',parLapply(cl,formula.ids, Model_RunOneCore))
     stopCluster(cl)
-    write_csv(Results.DF,paste0('ModelInfo',DV,'.csv'))
+    write_csv(Results.DF,paste0('ModelInfo',output,'.csv'))
     Sys.time() - tic
     return(Results.DF)
   }
