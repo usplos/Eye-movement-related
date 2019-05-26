@@ -16,7 +16,7 @@ source('https://raw.githubusercontent.com/usplos/Eye-movement-related/master/Lmm
 ```
 formula_generate(DV, IV, CLuster) # 生成formula，储存为csv文件，并将formula返回
 LMMRun_Once(df, Formula, Family = NULL) # 单个模型的建立，返回其AIC，BIC，以及是否收敛的情况
-LMMRun_Parallel(df, DV=NULL, IV=NULL, Cluster=NULL, Ifrun = F,
+LMMRun_Parallel(df, DV=NULL, IV=NULL, Cluster=NULL, Ifrun = F,output = NULL,
                    Manual = F, Manualcodefilename = NULL, Ncore = 4, Family = NULL) # 多线程建模，并返回这些模型的AIC，BIC，和是否收敛的情况
 ```
 
@@ -28,6 +28,7 @@ IV - 字符型，数据框中自变量的名称；
 Formula - 字符型，建模公式，格式同lmer()函数中的公式格式；
 Family - 字符型，因变量分布族，默认为NULL，即正态分布，其他分布可自行指定（广义模型）；
 Ifrun - 逻辑型，是否运行模型，默认为F；
+output - 字符型，最终输出文件名前缀
 Manual - 逻辑型，是否从已有的formula中建模，默认为F；
 Manualcodefilename - 字符型，已有的formula所在的文件名， 默认为NULL；
 Ncore - 数值型，线程的个数，默认4线程；
@@ -49,17 +50,17 @@ ModelInfo = LMMRun_Once(df = DF, Formula = Formulas[1], Family = NULL)
 
 * 多线程运行
 ```
-ModelsInfo = LMMRun_Parallel(df = df, DV = 'Y', IV = c('A', 'B'), Cluster = c('Sub', 'Item'), Ifrun = T)
+ModelsInfo = LMMRun_Parallel(df = df, DV = 'Y', IV = c('A', 'B'), Cluster = c('Sub', 'Item'), output = 'Y', Ifrun = T)
 ```
 
 * 从已有formula运行
 ```
-ModelsInfo = LMMRun_Parallel(df = df, Ifrun = T, Manual = T, Manualcodefilename = 'YFormula.csv')
+ModelsInfo = LMMRun_Parallel(df = df, Ifrun = T, output = 'Y', Manual = T, Manualcodefilename = 'YFormula.csv')
 ```
 
 * 8线程运行
 ```
-ModelsInfo = LMMRun_Parallel(df = df, Ifrun = T, Manual = T, Manualcodefilename = 'YFormula.csv', Ncore = 8)
+ModelsInfo = LMMRun_Parallel(df = df, Ifrun = T, output = 'Y', Manual = T, Manualcodefilename = 'YFormula.csv', Ncore = 8)
 ```
 
 ## 说明
