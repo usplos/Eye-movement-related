@@ -66,4 +66,4 @@ ModelsInfo = LMMRun_Parallel(df = df, Ifrun = T, Manual = T, Manualcodefilename 
 
 * 仅适用于两个或三个固定因子的情况
 
-* 默认适用于于两个随机因子的情况，如果只有一个随机因子，可以从生成的formulas中修改；
+* 默认适用于于两个随机因子的情况，如果只有一个随机因子，可以从生成的formulas的csv文件中修改；
