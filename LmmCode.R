@@ -105,7 +105,7 @@ LMMRun_Once = function(df, Formula, Family=NULL){
     MAIC = AIC(M)
     MBIC = BIC(M)
     M.Singular = isSingular(M)
-    resulttable = tibble(formula = Formula,
+    resulttable = data.frame(formula = Formula,
                          AIC = MAIC,
                          BIC = MBIC,
                          Singular = M.Singular)
@@ -143,7 +143,7 @@ LMMRun_Parallel = function(df, DV=NULL, IV=NULL, Cluster=NULL, Ifrun = F, output
       MAIC = AIC(M)
       MBIC = BIC(M)
       M.Singular = isSingular(M)
-      resulttable = tibble(formula = Formulas[formula.id],
+      resulttable = data.frame(formula = Formulas[formula.id],
                            AIC = MAIC,
                            BIC = MBIC,
                            Singular = M.Singular)
