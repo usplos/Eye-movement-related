@@ -4,6 +4,7 @@ source('https://raw.githubusercontent.com/usplos/Eye-movement-related/master/Lmm
   if(!require(shiny)){install.packages('shiny')}
 
   ui <- fluidPage(
+    titlePanel('Shiny version of LmmCode_Parallel'),
     sidebarLayout(
     
       sidebarPanel(
