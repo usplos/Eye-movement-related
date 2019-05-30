@@ -5,6 +5,9 @@ source('https://raw.githubusercontent.com/usplos/Eye-movement-related/master/Lmm
 
   ui <- fluidPage(
     sidebarLayout(
+    titlePanel(
+        title = 'Shiny version of LmmCode_Parallel'
+      ),
       sidebarPanel(
         textInput('DV','Input DV:',NULL),
 
