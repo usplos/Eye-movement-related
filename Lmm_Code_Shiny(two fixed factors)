@@ -1,0 +1,91 @@
+source('https://raw.githubusercontent.com/usplos/Eye-movement-related/master/LmmCode.R')
+  if(!require(tidyverse)){install.packages('tidyverse')}
+  if(!require(parallel)){install.packages('parallel')}
+  if(!require(shiny)){install.packages('shiny')}
+
+  ui <- fluidPage(
+    sidebarLayout(
+      sidebarPanel(
+        textInput('DV','Input DV:',NULL),
+
+        textInput('IV1','Input IV1:',NULL),
+
+        textInput('IV2','Input IV2:',NULL),
+
+        textInput('Cluster1','Input Cluster1:',NULL),
+
+        textInput('Cluster2','Input Cluster2:',NULL),
+        
+        checkboxInput('Ifrun','Ifrun',F),
+        
+        checkboxInput('Manual','Manual',F),
+        
+        textInput('mfile', 'Input formula file name',NULL),
+        
+        sliderInput('Ncore','Number of Cores', min = 1, max = 20, value = 4, step = 1),
+        
+        textInput('Output', 'Ouput file prefix name:',NULL),
+
+        fileInput("file1", "Choose CSV File",
+                  accept = c(
+                    "text/csv",
+                    "text/comma-separated-values,text/plain",
+                    ".csv")
+        )
+
+      ),
+      mainPanel(
+        tableOutput("contents")
+      )
+    )
+  )
+
+  server <- function(input, output) {
+    DV = reactive(input$DV)
+
+    IV1 = reactive(input$IV1)
+
+    IV2 = reactive(input$IV2)
+
+    Cluster1 = reactive(input$Cluster1)
+
+    Cluster2 = reactive(input$Cluster2)
+    
+    Manual = reactive(input$Manual)
+    
+    Ifrun = reactive(input$Ifrun)
+    
+    Output = reactive(input$Output)
+
+    output$contents <- renderTable({
+      # input$file1 will be NULL initially. After the user selects
+      # and uploads a file, it will be a data frame with 'name',
+      # 'size', 'type', and 'datapath' columns. The 'datapath'
+      # column will contain the local filenames where the data can
+      # be found.
+      mfile = reactive(input$mfile)
+      
+      if(is.null(mfile)){
+        m = NULL
+      }else{m = mfile()}
+      
+      inFile <- input$file1
+
+      if (is.null(inFile))
+        return(NULL)
+
+      d = read.csv(inFile$datapath, header = T)
+      
+      
+      LMMRun_Parallel(df = d,
+                      DV = DV(),
+                      IV = c(IV1(), IV2()),
+                      Cluster = c(Cluster1(), Cluster2()),
+                      Manual = Manual(),Manualcodefilename = m,
+                      Ifrun = Ifrun(),
+                      Ncore = input$Ncore,
+                      output = Output())
+    })
+  }
+
+  shinyApp(ui, server)
