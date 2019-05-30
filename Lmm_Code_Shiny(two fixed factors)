@@ -88,4 +88,4 @@ source('https://raw.githubusercontent.com/usplos/Eye-movement-related/master/Lmm
     })
   }
 
-  shinyApp(ui, server)
+  print(shinyApp(ui, server))
