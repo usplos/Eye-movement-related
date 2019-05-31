@@ -87,7 +87,7 @@ source('https://raw.githubusercontent.com/usplos/Eye-movement-related/master/Lmm
                       Manual = Manual(),Manualcodefilename = m,
                       Ifrun = Ifrun(),
                       Ncore = input$Ncore,
-                      output = Output())
+                      output = Output()) %>% arrange(Singular,BIC)
     })
   }
 
