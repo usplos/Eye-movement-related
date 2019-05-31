@@ -19,8 +19,6 @@ ui <- fluidPage(
 
       textInput('Cluster2','Input Cluster2:',NULL),
 
-      textInput('Family','Input data distribution family:',NULL),
-
       checkboxInput('Ifrun','Ifrun',F),
 
       checkboxInput('Manual','Manual',F),
@@ -74,12 +72,6 @@ server <- function(input, output) {
       m = NULL
     }else{m = mfile()}
 
-    Family = reactive(input$Family)
-
-    if(is.null(Family)){
-      f = NULL
-    }else{f = Family()}
-
     inFile <- input$file1
 
     if (is.null(inFile))
@@ -92,7 +84,7 @@ server <- function(input, output) {
                     DV = DV(),
                     IV = c(IV1(), IV2()),
                     Cluster = c(Cluster1(), Cluster2()),
-                    Manual = Manual(),Manualcodefilename = m,Family = f,
+                    Manual = Manual(),Manualcodefilename = m,
                     Ifrun = Ifrun(),
                     Ncore = input$Ncore,
                     output = Output()) %>% arrange(Singular,BIC)
