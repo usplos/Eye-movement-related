@@ -84,7 +84,7 @@ formula_generate = function(DV, IV, Cluster){
                        '(1',RSlope[ns],'|',Cluster[1],')'))
     }
   }
-  write_csv(tibble(Formula),paste0(DV, 'Formulas.csv'))
+  # write_csv(tibble(Formula),paste0(DV, 'Formulas.csv'))
   return(Formula)
 }
 
