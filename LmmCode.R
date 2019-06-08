@@ -376,3 +376,92 @@ formula_generate_shiny = function(){
 
   print(shinyApp(ui, server))
 }
+
+LMM_Model_Info_Shiny = function(){
+  ui <- fluidPage(
+    titlePanel('SHINY Graphic user interfere of linear mixed model'),
+    sidebarLayout(
+      
+      sidebarPanel(
+        textInput('Formula','Input the formula:',NULL),
+        
+        selectInput('Family', 'Input the distribution family',
+                    choices = c('gaussian','binomial','poisson')),
+        
+        fileInput("file1", "Choose CSV File",
+                  accept = c(
+                    "text/csv",
+                    "text/comma-separated-values,text/plain",
+                    ".csv")
+        ),
+        numericInput("obs", "Number of observations to view:", 6)
+      ),
+      mainPanel(
+        h4("Data summary:"),
+        tableOutput("DataSummary"),
+        h4("Model summary:"),
+        verbatimTextOutput("summary"),
+        h4("Anova:"),
+        tableOutput("Anova")
+      )
+    )
+  )
+  
+  server <- function(input, output) {
+    
+    Formula = reactive(input$Formula)
+    
+    Family = reactive(input$Family)
+    
+    obs = reactive(input$obs)
+    
+    output$DataSummary = renderTable({
+      inFile <- input$file1
+      
+      if (is.null(inFile))
+        return(NULL)
+      
+      d = read.csv(inFile$datapath, header = T)
+      head(d,n = obs())
+    })
+    
+    output$summary = renderPrint({
+      inFile <- input$file1
+      
+      if (is.null(inFile))
+        return(NULL)
+      
+      d = read.csv(inFile$datapath, header = T)
+      
+      if(Family() %in% 'gaussian'){
+        lmer(data = d,
+             formula = as.formula(Formula())) %>% summary()
+      }else{
+        glmer(data = d,
+              formula = as.formula(Formula()),
+              family = Family()) %>% summary()
+      }
+      
+      })
+    output$Anova = renderTable({
+      inFile <- input$file1
+      
+      if (is.null(inFile))
+        return(NULL)
+      
+      d = read.csv(inFile$datapath, header = T)
+      
+      if(Family() %in% 'gaussian'){
+        lmer(data = d,
+             formula = as.formula(Formula())) %>% anova()
+      }else{
+        glmer(data = d,
+              formula = as.formula(Formula()),
+              family = Family()) %>% anova()
+      }
+    })
+    
+  }
+  
+  print(shinyApp(ui, server))
+}
