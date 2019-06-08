@@ -173,356 +173,206 @@ LMMRun_Parallel = function(df, DV=NULL, IV=NULL, Cluster=NULL, Ifrun = F, output
   }
 }
 
-LMMRun_Parallel_shiny = function(number.IV = 2){
-  if(number.IV == 2){
-    ui <- fluidPage(
-      titlePanel('Shiny version of LmmCode_Parallel'),
-      sidebarLayout(
+LMMRun_Parallel_shiny = function(){
+  ui <- fluidPage(
+    titlePanel('Shiny version of LmmCode_Parallel'),
+    sidebarLayout(
 
-        sidebarPanel(
-          textInput('DV','Input DV:','Y'),
+      sidebarPanel(
+        textInput('DV','Input DV:','Y'),
 
-          textInput('IV1','Input IV1:', 'A'),
+        selectInput('IVNumber','Select the number of IVs',choices = c(2,3)),
 
-          textInput('IV2','Input IV2:', 'B'),
+        textInput('IV1','Input IV1:', 'A'),
 
-          textInput('Cluster1','Input Cluster1:', 'Sub'),
+        textInput('IV2','Input IV2:', 'B'),
 
-          textInput('Cluster2','Input Cluster2:', 'Item'),
+        textInput('IV3','Input IV3:', 'C'),
 
-          checkboxInput('Ifrun','Ifrun',T),
+        textInput('Cluster1','Input Cluster1:', 'Sub'),
 
-          checkboxInput('Manual','Manual',F),
+        textInput('Cluster2','Input Cluster2:', 'Item'),
 
-          textInput('mfile', 'Input formula file name',NULL),
+        checkboxInput('Ifrun','Ifrun',T),
 
-          selectInput('Family', 'Input the distribution family',
-                      choices = c('gaussian','binomial','poisson')),
+        checkboxInput('Manual','Manual',F),
 
-          sliderInput('Ncore','Number of Cores', min = 1, max = 20, value = 4, step = 1),
+        textInput('mfile', 'Input formula file name',NULL),
 
-          textInput('Output', 'Ouput file prefix name:',NULL),
+        selectInput('Family', 'Input the distribution family',
+                    choices = c('gaussian','binomial','poisson')),
 
-          fileInput("file1", "Choose CSV File",
-                    accept = c(
-                      "text/csv",
-                      "text/comma-separated-values,text/plain",
-                      ".csv")
-          )
+        sliderInput('Ncore','Number of Cores', min = 1, max = 20, value = 4, step = 1),
 
+        textInput('Output', 'Ouput file prefix name:','Y'),
+
+        fileInput("file1", "Choose CSV File",
+                  accept = c(
+                    "text/csv",
+                    "text/comma-separated-values,text/plain",
+                    ".csv")
         ),
-        mainPanel(
-          tableOutput("contents")
-        )
+
+        actionButton("update", "Update View")
+
+      ),
+      mainPanel(
+        tableOutput("contents")
       )
     )
+  )
 
-    server <- function(input, output) {
-      DV = reactive(input$DV)
+  server <- function(input, output) {
+    DV = reactive(input$DV)
 
-      IV1 = reactive(input$IV1)
+    IVNumber = reactive(input$IVNumber)
 
-      IV2 = reactive(input$IV2)
+    IV1 = reactive(input$IV1)
 
-      Cluster1 = reactive(input$Cluster1)
+    IV2 = reactive(input$IV2)
 
-      Cluster2 = reactive(input$Cluster2)
+    IV3 = reactive(input$IV3)
 
-      Manual = reactive(input$Manual)
+    Cluster1 = reactive(input$Cluster1)
 
-      Ifrun = reactive(input$Ifrun)
+    Cluster2 = reactive(input$Cluster2)
 
-      FamilyD = reactive({
-        switch(input$Family,
-               "gaussian" = NULL,
-               "binomial" = 'binomial',
-               "poisson" = 'poisson')
-      })
+    Manual = reactive(input$Manual)
 
+    Ifrun = reactive(input$Ifrun)
 
-      Output = reactive(input$Output)
-
-      output$contents <- renderTable({
-        # input$file1 will be NULL initially. After the user selects
-        # and uploads a file, it will be a data frame with 'name',
-        # 'size', 'type', and 'datapath' columns. The 'datapath'
-        # column will contain the local filenames where the data can
-        # be found.
-        mfile = reactive(input$mfile)
-
-        if(is.null(mfile)){
-          m = NULL
-        }else{m = mfile()}
-
-        inFile <- input$file1
-
-        if (is.null(inFile))
-          return(NULL)
-
-        d = read.csv(inFile$datapath, header = T)
+    FamilyD = reactive({
+      switch(input$Family,
+             "gaussian" = NULL,
+             "binomial" = 'binomial',
+             "poisson" = 'poisson')
+    })
 
 
-        LMMRun_Parallel(df = d,
-                        DV = DV(),
-                        IV = c(IV1(), IV2()),
-                        Cluster = c(Cluster1(), Cluster2()),
-                        Manual = Manual(),Manualcodefilename = m, Family = FamilyD(),
-                        Ifrun = Ifrun(),
-                        Ncore = input$Ncore,
-                        output = Output()) %>% arrange(Singular,BIC)
-      })
-    }
+    Output = reactive(input$Output)
 
-    print(shinyApp(ui, server))
+    output$contents <- renderTable({
+      # input$file1 will be NULL initially. After the user selects
+      # and uploads a file, it will be a data frame with 'name',
+      # 'size', 'type', and 'datapath' columns. The 'datapath'
+      # column will contain the local filenames where the data can
+      # be found.
+      mfile = reactive(input$mfile)
+
+      if(is.null(mfile)){
+        m = NULL
+      }else{m = mfile()}
+
+      inFile <- input$file1
+
+      if (is.null(inFile))
+        return(NULL)
+
+      d = read.csv(inFile$datapath, header = T)
+
+
+      anovatable = eventReactive(input$update, {
+        if(IVNumber() == 2){
+          LMMRun_Parallel(df = d,
+                          DV = DV(),
+                          IV = c(IV1(), IV2()),
+                          Cluster = c(Cluster1(), Cluster2()),
+                          Manual = Manual(),Manualcodefilename = m, Family = FamilyD(),
+                          Ifrun = Ifrun(),
+                          Ncore = input$Ncore,
+                          output = Output()) %>% arrange(Singular,BIC)
+        }else{
+          LMMRun_Parallel(df = d,
+                          DV = DV(),
+                          IV = c(IV1(), IV2(),IV3()),
+                          Cluster = c(Cluster1(), Cluster2()),
+                          Manual = Manual(),Manualcodefilename = m, Family = FamilyD(),
+                          Ifrun = Ifrun(),
+                          Ncore = input$Ncore,
+                          output = Output()) %>% arrange(Singular,BIC)
+        }}, ignoreNULL = FALSE)
+      anovatable()
+    })
   }
 
-  if(number.IV == 3){
-    ui <- fluidPage(
-      titlePanel('Shiny version of LmmCode_Parallel'),
-      sidebarLayout(
-
-        sidebarPanel(
-          textInput('DV','Input DV:','Y'),
-
-          textInput('IV1','Input IV1:', 'A'),
-
-          textInput('IV2','Input IV2:', 'B'),
-
-          textInput('IV3','Input IV3:', 'C'),
-
-          textInput('Cluster1','Input Cluster1:', 'Sub'),
-
-          textInput('Cluster2','Input Cluster2:', 'Item'),
-
-          checkboxInput('Ifrun','Ifrun',T),
-
-          checkboxInput('Manual','Manual',F),
-
-          textInput('mfile', 'Input formula file name',NULL),
-
-          selectInput('Family', 'Input the distribution family',
-                      choices = c('gaussian','binomial','poisson')),
-
-          sliderInput('Ncore','Number of Cores', min = 1, max = 20, value = 4, step = 1),
-
-          textInput('Output', 'Ouput file prefix name:',NULL),
-
-          fileInput("file1", "Choose CSV File",
-                    accept = c(
-                      "text/csv",
-                      "text/comma-separated-values,text/plain",
-                      ".csv")
-          )
-
-        ),
-        mainPanel(
-          tableOutput("contents")
-        )
-      )
-    )
-
-    server <- function(input, output) {
-      DV = reactive(input$DV)
-
-      IV1 = reactive(input$IV1)
-
-      IV2 = reactive(input$IV2)
-
-      IV3 = reactive(input$IV3)
-
-      Cluster1 = reactive(input$Cluster1)
-
-      Cluster2 = reactive(input$Cluster2)
-
-      Manual = reactive(input$Manual)
-
-      Ifrun = reactive(input$Ifrun)
-
-      FamilyD = reactive({
-        switch(input$Family,
-               "gaussian" = NULL,
-               "binomial" = 'binomial',
-               "poisson" = 'poisson')
-      })
-
-
-      Output = reactive(input$Output)
-
-      output$contents <- renderTable({
-        # input$file1 will be NULL initially. After the user selects
-        # and uploads a file, it will be a data frame with 'name',
-        # 'size', 'type', and 'datapath' columns. The 'datapath'
-        # column will contain the local filenames where the data can
-        # be found.
-        mfile = reactive(input$mfile)
-
-        if(is.null(mfile)){
-          m = NULL
-        }else{m = mfile()}
-
-        inFile <- input$file1
-
-        if (is.null(inFile))
-          return(NULL)
-
-        d = read.csv(inFile$datapath, header = T)
-
-
-        LMMRun_Parallel(df = d,
-                        DV = DV(),
-                        IV = c(IV1(), IV2(), IV3()),
-                        Cluster = c(Cluster1(), Cluster2()),
-                        Manual = Manual(),Manualcodefilename = m, Family = FamilyD(),
-                        Ifrun = Ifrun(),
-                        Ncore = input$Ncore,
-                        output = Output()) %>% arrange(Singular,BIC)
-      })
-    }
-
-    print(shinyApp(ui, server))
-  }
+  print(shinyApp(ui, server))
 }
 
 
-formula_generate_shiny = function(number.IV = 2){
-  if(number.IV == 2){
-    ui <- fluidPage(
-      titlePanel('Shiny version of formula_generate'),
-      sidebarLayout(
+formula_generate_shiny = function(){
+  ui <- fluidPage(
+    titlePanel('Shiny version of formula_generate'),
+    sidebarLayout(
 
-        sidebarPanel(
-          textInput('DV','Input DV:','Y'),
+      sidebarPanel(
+        textInput('DV','Input DV:','Y'),
 
-          textInput('IV1','Input IV1:', 'A'),
+        selectInput('IVNumber','Select the number of IVs:',choices = c(2,3)),
 
-          textInput('IV2','Input IV2:', 'B'),
+        textInput('IV1','Input IV1:', 'A'),
 
-          textInput('Cluster1','Input Cluster1:', 'Sub'),
+        textInput('IV2','Input IV2:', 'B'),
 
-          textInput('Cluster2','Input Cluster2:', 'Item'),
-          
-          downloadButton("downloadData", "Download")
-          )
+        textInput('IV3','Input IV3:', 'C'),
 
-        ,
-        mainPanel(
-          tableOutput("contents")
-        )
-      ))
+        textInput('Cluster1','Input Cluster1:', 'Sub'),
 
+        textInput('Cluster2','Input Cluster2:', 'Item'),
 
-    server <- function(input, output) {
-      DV = reactive(input$DV)
+        downloadButton("downloadData", "Download")
+      )
 
-      IV1 = reactive(input$IV1)
-
-      IV2 = reactive(input$IV2)
-
-      Cluster1 = reactive(input$Cluster1)
-
-      Cluster2 = reactive(input$Cluster2)
+      ,
+      mainPanel(
+        tableOutput("contents")
+      )
+    ))
 
 
-      Output = reactive(input$Output)
+  server <- function(input, output) {
+    DV = reactive(input$DV)
 
-      output$contents <- renderTable({
-        # input$file1 will be NULL initially. After the user selects
-        # and uploads a file, it will be a data frame with 'name',
-        # 'size', 'type', and 'datapath' columns. The 'datapath'
-        # column will contain the local filenames where the data can
-        # be found.
+    IVNumber = reactive(input$IVNumber)
 
+    IV1 = reactive(input$IV1)
+
+    IV2 = reactive(input$IV2)
+
+    IV3 = reactive(input$IV3)
+
+    Cluster1 = reactive(input$Cluster1)
+
+    Cluster2 = reactive(input$Cluster2)
+
+
+    Output = reactive(input$Output)
+
+    output$contents <- renderTable({
+      if (IVNumber() == 2) {
         formula_generate(DV = DV(),
                          IV = c(IV1(), IV2()),
                          Cluster = c(Cluster1(), Cluster2()))
-      })
-      
-      output$downloadData <- downloadHandler(
-        filename = function() {
-          paste(input$DV,'Formulas', ".csv", sep = "")
-        },
-        content = function(file) {
-          write.csv(formula_generate(DV = DV(),
-                                     IV = c(IV1(), IV2()),
-                                     Cluster = c(Cluster1(), Cluster2())) %>% as_tibble(), file, row.names = FALSE)
-        }
-      )
-
-
-    }
-
-    print(shinyApp(ui, server))
-  }
-  
-  if(number.IV == 3){
-    ui <- fluidPage(
-      titlePanel('Shiny version of formula_generate'),
-      sidebarLayout(
-        
-        sidebarPanel(
-          textInput('DV','Input DV:','Y'),
-          
-          textInput('IV1', 'Input IV1:', 'A'),
-          
-          textInput('IV2', 'Input IV2:', 'B'),
-          
-          textInput('IV3', 'Input IV3:', 'C'),
-          
-          textInput('Cluster1','Input Cluster1:', 'Sub'),
-          
-          textInput('Cluster2','Input Cluster2:', 'Item'),
-          
-          downloadButton("downloadData", "Download")
-        )
-        
-        ,
-        mainPanel(
-          tableOutput("contents")
-        )
-      ))
-    
-    
-    server <- function(input, output) {
-      DV = reactive(input$DV)
-      
-      IV1 = reactive(input$IV1)
-      
-      IV2 = reactive(input$IV2)
-      
-      IV3 = reactive(input$IV3)
-      
-      Cluster1 = reactive(input$Cluster1)
-      
-      Cluster2 = reactive(input$Cluster2)
-      
-      
-      Output = reactive(input$Output)
-      
-      output$contents <- renderTable({
-        # input$file1 will be NULL initially. After the user selects
-        # and uploads a file, it will be a data frame with 'name',
-        # 'size', 'type', and 'datapath' columns. The 'datapath'
-        # column will contain the local filenames where the data can
-        # be found.
-        
+      }else{
         formula_generate(DV = DV(),
-                         IV = c(IV1(), IV2(), IV3()),
+                         IV = c(IV1(), IV2(),IV3()),
                          Cluster = c(Cluster1(), Cluster2()))
-      })
-      
-      output$downloadData <- downloadHandler(
-        filename = function() {
-          paste(input$DV,'Formulas', ".csv", sep = "")
-        },
-        content = function(file) {
-          write.csv(formula_generate(DV = DV(),
-                                     IV = c(IV1(), IV2(), IV3()),
-                                     Cluster = c(Cluster1(), Cluster2())) %>% as_tibble(), file, row.names = FALSE)
-        }
-      )
-      
-    }
-    
-    print(shinyApp(ui, server))
+      }
+
+    })
+
+    output$downloadData <- downloadHandler(
+      filename = function() {
+        paste(input$DV,'Formulas', ".csv", sep = "")
+      },
+      content = function(file) {
+        write.csv(formula_generate(DV = DV(),
+                                   IV = c(IV1(), IV2()),
+                                   Cluster = c(Cluster1(), Cluster2())) %>% as_tibble(), file, row.names = FALSE)
+      }
+    )
+
+
   }
+
+  print(shinyApp(ui, server))
 }
