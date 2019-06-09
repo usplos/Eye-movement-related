@@ -611,3 +611,13 @@ LMM_Model_Info_Shiny = function(){
   print(shinyApp(ui, server))
 }
 
+cat('\n\nThanks for using the Shiny user interface For Linear Mixed Model!\n\n')
+cat('Now there are several functions in your exvironment.\n
+    You can simply run some them to satisfy your some need.\n\n')
+cat('You can run this command to generate and download all formulas you might need:\n
+    formula_generate_shiny()\n\n')
+cat('You can run this command to run all possible models in order to select the best fitted one:\n
+    LMMRun_Parallel_shiny()\n\n')
+cat('You can run this command to build a model and get the summary, anova information.\nYou can also perform simple effect analysis and generate good-looking plot:\n
+    LMM_Model_Info_Shiny()\n\n')
+
