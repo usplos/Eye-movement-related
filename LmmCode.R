@@ -412,6 +412,8 @@ LMM_Model_Info_Shiny = function(){
                     choices = c('bar','line')),
         selectInput('Themes','Select the theme of plot:',
                     choices = c('origin','APA','Solar','Wall Street Journal')),
+        selectInput('Color','Select the color palette',
+                    choices = c('Set1','Set2','Set3')),
         textInput('Ylab','Input the label of y axis:', NULL),
         textInput('Xlab','Input the label of x axis:', NULL),
         checkboxInput('Dots','Whether draw raw data as dots?',F)
@@ -446,6 +448,7 @@ LMM_Model_Info_Shiny = function(){
     PLOT = reactive(input$Plot)
     Geomtype = reactive(input$Geomtype)
     Themes = reactive(input$Themes)
+    Color = reactive(input$Color)
     Dots = reactive(input$Dots)
     Ylab = reactive(input$Ylab)
     Xlab = reactive(input$Xlab)
@@ -571,7 +574,7 @@ LMM_Model_Info_Shiny = function(){
                                    'errorbar.width = 0.2,',
                                    ifelse(Geomtype() %in% 'bar','','dodge.width = 0.3,'),
                                    'point.alpha = 0.1,',
-                                   'colors = \'Set1\',',
+                                   'colors = \'', Color(),'\',',
                                    'plot.points = ',Dots(),')',
                                    ifelse(Themes() %in% 'origin',
                                           '',
@@ -589,7 +592,7 @@ LMM_Model_Info_Shiny = function(){
                                    'errorbar.width = 0.2,',
                                    ifelse(Geomtype() %in% 'bar','','dodge.width = 0.3,'),
                                    'point.alpha = 0.1,',
-                                   'colors = \'Set1\',',
+                                   'colors = \'', Color(),'\',',
                                    'plot.points = ',Dots(),')',
                                    ifelse(Themes() %in% 'origin',
                                           '',
