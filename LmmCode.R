@@ -612,15 +612,16 @@ LMM_Model_Info_Shiny = function(){
 }
 
 cat('\n\nThanks for using the Shiny user interface For Linear Mixed Model!\n\n')
-cat('Now there are several functions in your exvironment.\n
-    You can simply run some them to satisfy your some need.\n\n')
+cat('Now there are several functions in your environment.\n
+    You can simply run some of them to satisfy some of your need.\n\n')
 cat('########################\n1.You can run this command to generate and download all formulas you might need:\n
-    formula_generate_shiny()\n#######################\n\n')
+    formula_generate_shiny()\n\n')
 cat('########################\n2.You can run this command to run all possible models in order to select the best fitted one:\n
-    LMMRun_Parallel_shiny()\n#######################\n\n')
+    LMMRun_Parallel_shiny()\n\n')
 cat('########################\n3.You can run this command to build a model and get the summary, anova information.\nYou can also perform simple effect analysis and generate good-looking plot:\n
-    LMM_Model_Info_Shiny()\n#######################\n\n')
-cat('For more detail and usages, refer to the link below:\n
+    LMM_Model_Info_Shiny()\n\n########################\n\n')
+cat('For more details and usages, please refer to the links below:\n
     https://zhuanlan.zhihu.com/p/67680257\n
     https://zhuanlan.zhihu.com/p/67048151\n
     https://zhuanlan.zhihu.com/p/63092231\n')
+cat('\n########################\nPlease note that there will be continuous updates, so be sure to look out for it')
