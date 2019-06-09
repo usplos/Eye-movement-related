@@ -611,7 +611,7 @@ LMM_Model_Info_Shiny = function(){
   print(shinyApp(ui, server))
 }
 
-cat('\n\nThanks for using the Shiny user interface For Linear Mixed Model!\n\n')
+cat('\nThanks for using the Shiny user interface For Linear Mixed Model!\n\n')
 cat('Now there are several functions in your environment.\n
     You can simply run some of them to satisfy some of your need.\n\n')
 cat('########################\n1.You can run this command to generate and download all formulas you might need:\n
