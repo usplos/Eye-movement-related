@@ -2,6 +2,11 @@
 if(!require(tidyverse)){install.packages('tidyverse')}
 if(!require(parallel)){install.packages('parallel')}
 if(!require(shiny)){install.packages('shiny')}
+if(!require(interactions)){install.packages('interactions')}
+if(!require(lmerTest)){install.packages('lmerTest')}
+if(!require(emmeans)){install.packages('emmeans')}
+if(!require(jtools)){install.packages('jtools')}
+if(!require(ggthemes)){install.packages('ggthemes')}
 
 formula_generate = function(DV, IV, Cluster){
   library(tidyverse)
@@ -381,58 +386,88 @@ LMM_Model_Info_Shiny = function(){
   ui <- fluidPage(
     titlePanel('SHINY Graphic user interfere of linear mixed model'),
     sidebarLayout(
-      
+
       sidebarPanel(
         textInput('Formula','Input the formula:',NULL),
-        
+
         selectInput('Family', 'Input the distribution family',
                     choices = c('gaussian','binomial','poisson')),
-        
+
         fileInput("file1", "Choose CSV File",
                   accept = c(
                     "text/csv",
                     "text/comma-separated-values,text/plain",
                     ".csv")
         ),
-        numericInput("obs", "Number of observations to view:", 6)
+        numericInput("obs", "Number of observations to view:", 6),
+
+        checkboxInput('SimpleEffect',label = 'Whether to preform the simple effect analysis?',value = F),
+        selectInput('IVNumber','Select the number of fixed factor',choices = c(2,3)),
+        textInput('Predictor','Input the predictor`s name',NULL),
+        textInput('Modulator1','Input the modulator`s name',NULL),
+        textInput('Modulator2','Input 2nd modulator`s name if have',NULL),
+
+        checkboxInput('Plot','Whether to plot',F),
+        selectInput('Geomtype','Select the geom to draw',
+                    choices = c('bar','line')),
+        selectInput('Themes','Select the theme of plot:',
+                    choices = c('origin','APA','Solar','Wall Street Journal')),
+        textInput('Ylab','Input the label of y axis:', NULL),
+        textInput('Xlab','Input the label of x axis:', NULL),
+        checkboxInput('Dots','Whether draw raw data as dots?',F)
       ),
       mainPanel(
-        h4("Data summary:"),
-        tableOutput("DataSummary"),
-        h4("Model summary:"),
-        verbatimTextOutput("summary"),
-        h4("Anova:"),
-        tableOutput("Anova")
+        tabsetPanel(type = 'tabs',
+                    tabPanel('Data Summary',tableOutput("DataSummary")),
+                    tabPanel('Model Summary',verbatimTextOutput("summary")),
+                    tabPanel('Anova',tableOutput("Anova")),
+                    tabPanel('Simple Effect',tableOutput('Emmeans'),tableOutput('Comparison')),
+                    tabPanel('Plot', plotOutput('Plot')))
+
+
       )
     )
   )
-  
+
   server <- function(input, output) {
-    
+
     Formula = reactive(input$Formula)
-    
+
     Family = reactive(input$Family)
-    
+
     obs = reactive(input$obs)
-    
+
+    SimpleEffect = reactive(input$SimpleEffect)
+    IVNumber = reactive(input$IVNumber)
+    Predictor = reactive(input$Predictor)
+    Modulator1 = reactive(input$Modulator1)
+    Modulator2 = reactive(input$Modulator2)
+
+    PLOT = reactive(input$Plot)
+    Geomtype = reactive(input$Geomtype)
+    Themes = reactive(input$Themes)
+    Dots = reactive(input$Dots)
+    Ylab = reactive(input$Ylab)
+    Xlab = reactive(input$Xlab)
+
     output$DataSummary = renderTable({
       inFile <- input$file1
-      
+
       if (is.null(inFile))
         return(NULL)
-      
+
       d = read.csv(inFile$datapath, header = T)
       head(d,n = obs())
     })
-    
+
     output$summary = renderPrint({
       inFile <- input$file1
-      
+
       if (is.null(inFile))
         return(NULL)
-      
+
       d = read.csv(inFile$datapath, header = T)
-      
+
       if(Family() %in% 'gaussian'){
         lmer(data = d,
              formula = as.formula(Formula())) %>% summary()
@@ -441,27 +476,135 @@ LMM_Model_Info_Shiny = function(){
               formula = as.formula(Formula()),
               family = Family()) %>% summary()
       }
-      
-      })
+
+    })
     output$Anova = renderTable({
       inFile <- input$file1
-      
+
       if (is.null(inFile))
         return(NULL)
-      
+
       d = read.csv(inFile$datapath, header = T)
-      
+
       if(Family() %in% 'gaussian'){
-        lmer(data = d,
-             formula = as.formula(Formula())) %>% anova()
+        M = lmer(data = d,
+                 formula = as.formula(Formula())) %>% anova()
+        M %>% as_tibble() %>% mutate(Name = rownames(M))
       }else{
-        glmer(data = d,
-              formula = as.formula(Formula()),
-              family = Family()) %>% anova()
+        M = glmer(data = d,
+                  formula = as.formula(Formula()),
+                  family = Family()) %>% anova()
+        M %>% as_tibble() %>% mutate(Name = rownames(M))
       }
     })
-    
+
+    output$Emmeans = renderTable({
+      if(isTRUE(SimpleEffect())){
+        inFile <- input$file1
+
+        if (is.null(inFile))
+          return(NULL)
+
+        d = read.csv(inFile$datapath, header = T)
+        if(Family() %in% 'gaussian'){
+          M = lmer(data = d,
+                   formula = as.formula(Formula()))
+        }else{
+          M = glmer(data = d,
+                    formula = as.formula(Formula()),
+                    family = Family())
+        }
+        if(IVNumber() == 2){
+          eval(parse(text = paste0('emmeans(M, pairwise~',Predictor(),'|',Modulator1(),')$emm')))
+        }else{
+          eval(parse(text = paste0('emmeans(M, pairwise~',Predictor(),'|',Modulator1(),'|',Modulator2(),')$emm')))
+        }
+      }
+
+    })
+
+    output$Comparison = renderTable({
+      if(isTRUE(SimpleEffect())){
+        inFile <- input$file1
+
+        if (is.null(inFile))
+          return(NULL)
+
+        d = read.csv(inFile$datapath, header = T)
+        if(Family() %in% 'gaussian'){
+          M = lmer(data = d,
+                   formula = as.formula(Formula()))
+        }else{
+          M = glmer(data = d,
+                    formula = as.formula(Formula()),
+                    family = Family())
+        }
+        if(IVNumber() == 2){
+          eval(parse(text = paste0('emmeans(M, pairwise~',Predictor(),'|',Modulator1(),')$contr %>% as_tibble()')))
+        }else{
+          eval(parse(text = paste0('emmeans(M, pairwise~',Predictor(),'|',Modulator1(),'|',Modulator2(),')$contr %>% as_tibble()')))
+        }
+
+      }
+    })
+
+    output$Plot = renderPlot({
+      if(isTRUE(PLOT())){
+        inFile <- input$file1
+
+        if (is.null(inFile))
+          return(NULL)
+
+        d = read.csv(inFile$datapath, header = T)
+        if(Family() %in% 'gaussian'){
+          M = lmer(data = d,
+                   formula = as.formula(Formula()))
+        }else{
+          M = glmer(data = d,
+                    formula = as.formula(Formula()),
+                    family = Family())
+        }
+        if(IVNumber() == 2){
+          eval(parse(text = paste0('interactions::cat_plot(model = M, pred = ',Predictor(),', ',
+                                   'modx = ',Modulator1(),', ',
+                                   'geom = ','\'',Geomtype(),'\'',', ',
+                                   'errorbar.width = 0.2,',
+                                   ifelse(Geomtype() %in% 'bar','','dodge.width = 0.3,'),
+                                   'point.alpha = 0.1,',
+                                   'colors = \'Set1\',',
+                                   'plot.points = ',Dots(),')',
+                                   ifelse(Themes() %in% 'origin',
+                                          '',
+                                          ifelse(Themes() %in% 'APA',
+                                                 '+jtools::theme_apa()',
+                                                 ifelse(Themes() %in% 'Solar',
+                                                        '+ggthemes::theme_solarized()',
+                                                        '+ggthemes::theme_wsj()'))),
+                                   '+labs(y = Ylab(), x = Xlab())')))
+        }else{
+          eval(parse(text = paste0('interactions::cat_plot(model = M, pred = ',Predictor(),', ',
+                                   'modx = ',Modulator1(),', ',
+                                   'mod2 = ',Modulator2(),', ',
+                                   'geom = ','\'',Geomtype(),'\'',', ',
+                                   'errorbar.width = 0.2,',
+                                   ifelse(Geomtype() %in% 'bar','','dodge.width = 0.3,'),
+                                   'point.alpha = 0.1,',
+                                   'colors = \'Set1\',',
+                                   'plot.points = ',Dots(),')',
+                                   ifelse(Themes() %in% 'origin',
+                                          '',
+                                          ifelse(Themes() %in% 'APA',
+                                                 '+jtools::theme_apa()',
+                                                 ifelse(Themes() %in% 'Solar',
+                                                        '+ggthemes::theme_solarized()',
+                                                        '+ggthemes::theme_wsj()'))),
+                                   '+labs(y = Ylab(), x = Xlab())')))
+        }
+      }
+    })
+
   }
-  
+
   print(shinyApp(ui, server))
 }
+
