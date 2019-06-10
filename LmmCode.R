@@ -404,7 +404,7 @@ LMM_Model_Info_Shiny = function(){
         ),
         numericInput("obs", "Set the number of observations to view:", 6),
         
-        downloadButton("downloadSummary", "Download the emmeans table"),
+        downloadButton("downloadSummary", "Download the Summary table"),
         downloadButton("downloadAnova", "Download the Anova table"),
         
         checkboxInput('SimpleEffect',label = 'Whether to preform the simple effect analysis?',value = F),
