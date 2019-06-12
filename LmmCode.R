@@ -813,6 +813,180 @@ LMM_Model_Info_Shiny = function(){
   print(shinyApp(ui, server))
 }
 
+Datafilter = function(NGroup,df, DV,
+                      Group1=NULL, Group2=NULL, Group3=NULL, Group4 = NULL, Group5 = NULL, ZV = 3){
+  if(NGroup == 0){
+    eval(parse(text = paste0('df1 = df %>% mutate(Zvalue = scale(',DV,'))',' %>% ',
+                             'filter(abs(Zvalue) < ',ZV,')',' %>% ',
+                             'select(-Zvalue)')))
+  }
+
+  if(NGroup == 1){
+    eval(parse(text = paste0('df2 = df %>% group_by(',Group1,')',' %>% ',
+                             'mutate(Zvalue = scale(',DV,'))', ' %>% ',
+                             'filter(abs(Zvalue) < ', ZV,')',' %>% ',
+                             'select(-Zvalue)')))
+  }
+
+  if(NGroup == 2){
+    eval(parse(text = paste0('df2 = df %>% group_by(',Group1,', ',Group2,')',' %>% ',
+                             'mutate(Zvalue = scale(',DV,'))', ' %>% ',
+                             'filter(abs(Zvalue) < ', ZV,')',' %>% ',
+                             'select(-Zvalue)')))
+  }
+
+  if(NGroup == 3){
+    eval(parse(text = paste0('df2 = df %>% group_by(',Group1,', ',Group2,', ',Group3,')',' %>% ',
+                             'mutate(Zvalue = scale(',DV,'))', ' %>% ',
+                             'filter(abs(Zvalue) < ', ZV,')',' %>% ',
+                             'select(-Zvalue)')))
+  }
+
+  if(NGroup == 4){
+    eval(parse(text = paste0('df2 = df %>% group_by(',Group1,', ',Group2,', ',Group3,', ',Group4,')',' %>% ',
+                             'mutate(Zvalue = scale(',DV,'))', ' %>% ',
+                             'filter(abs(Zvalue) < ', ZV,')',' %>% ',
+                             'select(-Zvalue)')))
+  }
+
+  if(NGroup == 5){
+    eval(parse(text = paste0('df2 = df %>% group_by(',Group1,', ',Group2,', ',Group3,', ',Group4,', ',Group5,')',' %>% ',
+                             'mutate(Zvalue = scale(',DV,'))', ' %>% ',
+                             'filter(abs(Zvalue) < ', ZV,')',' %>% ',
+                             'select(-Zvalue)')))
+  }
+
+  return(df2)
+}
+
+Data_Filter_Shiny = function(){
+  ui <- fluidPage(
+    titlePanel('SHINY Data filter'),
+    sidebarLayout(
+
+      sidebarPanel(
+        fileInput("file1", "Choose CSV File of your data",
+                  accept = c(
+                    "text/csv",
+                    "text/comma-separated-values,text/plain",
+                    ".csv")
+        ),
+
+        textInput('DV','Input the dependent variable:',NULL),
+
+        selectInput('NumGroup','Select the number of categories',choices = c(0:5)),
+
+        textInput('G1','Input the 1st factor:', NULL),
+
+        textInput('G2','Input the 2nd factor:', NULL),
+
+        textInput('G3','Input the 3rd factor:', NULL),
+
+        textInput('G4','Input the 3rd factor:', NULL),
+
+        textInput('G5','Input the 3rd factor:', NULL),
+
+        sliderInput('ZV','Set the Z value to filter',min = 1, max = 5,step = 0.1, value = 3),
+
+        numericInput("obs", "Set the number of observations to view:", 6),
+
+        downloadButton("downloadData", "Download the formulas")
+      )
+
+      ,
+      mainPanel(
+        h4('Data raw Summary'),
+        tableOutput("DataSummary"),
+        textOutput('OldLine'),
+        h4('Data filtered Summary:'),
+        tableOutput('DataFiltered'),
+        textOutput('NewLine')
+      )
+    ))
+
+
+  server <- function(input, output) {
+    DV = reactive(input$DV)
+    NumGroup = reactive(input$NumGroup)
+    G1 = reactive(input$G1)
+    G2 = reactive(input$G2)
+    G3 = reactive(input$G3)
+    G4 = reactive(input$G4)
+    G5 = reactive(input$G5)
+    ZV = reactive(input$ZV)
+    obs = reactive(input$obs)
+
+
+    output$DataSummary = renderTable({
+      inFile <- input$file1
+
+      if (is.null(inFile))
+        return(NULL)
+
+      d = read.csv(inFile$datapath, header = T)
+      head(d,n = obs())
+    })
+
+    output$OldLine = renderText({
+      inFile <- input$file1
+
+      if (is.null(inFile))
+        return(NULL)
+
+      d = read.csv(inFile$datapath, header = T)
+      print(paste0('There are ', nrow(d),' lines.'))
+    })
+
+    output$DataFiltered = renderTable({
+      inFile <- input$file1
+
+      if (is.null(inFile))
+        return(NULL)
+
+      d = read.csv(inFile$datapath, header = T)
+      df = Datafilter(NGroup = NumGroup(), df = d,
+                      DV = DV(),Group1 = G1(),Group2 = G2(),Group3 = G3(),Group4 = G4(),Group5 = G5(),
+                      ZV = ZV())
+      head(df, n = obs())
+    })
+
+    output$NewLine = renderText({
+      inFile <- input$file1
+
+      if (is.null(inFile))
+        return(NULL)
+
+      d = read.csv(inFile$datapath, header = T)
+      df = Datafilter(NGroup = NumGroup(), df = d,
+                      DV = DV(),Group1 = G1(),Group2 = G2(),Group3 = G3(),Group4 = G4(),Group5 = G5(),
+                      ZV = ZV())
+      print(paste0('There are ', nrow(df),' lines.'))
+    })
+
+    output$downloadData <- downloadHandler(
+      filename = function() {
+        paste(input$DV,'Filtered', ".csv", sep = "")
+      },
+      content = function(file) {
+        inFile <- input$file1
+
+        if (is.null(inFile))
+          return(NULL)
+
+        d = read.csv(inFile$datapath, header = T)
+        df = Datafilter(NGroup = NumGroup(), df = d,
+                        DV = DV(),Group1 = G1(),Group2 = G2(),Group3 = G3(),Group4 = G4(),Group5 = G5(),
+                        ZV = ZV())
+        write.csv(df, file, row.names = FALSE)
+      }
+    )
+
+
+  }
+
+  print(shinyApp(ui, server))
+}
+
 cat('\nThanks for using the Shiny user interface For Linear Mixed Model!\n\n')
 cat('Now there are several functions in your environment.\n
     You can simply run some of them to satisfy some of your need.\n\n')
@@ -821,7 +995,9 @@ cat('########################\n1.You can run this command to generate and downlo
 cat('########################\n2.You can run this command to run all possible models in order to select the best fitted one:\n
     LMMRun_Parallel_shiny()\n\n')
 cat('########################\n3.You can run this command to build a model and get the summary, anova information.\nYou can also perform simple effect analysis and generate good-looking plot:\n
-    LMM_Model_Info_Shiny()\n\n########################\n\n')
+    LMM_Model_Info_Shiny()\n\n')
+cat('########################\n4.You can run this command to filter data:\n
+    Data_Filter_Shiny()\n\n########################\n\n')
 cat('For more details and usages, please refer to the links below:\n
     https://zhuanlan.zhihu.com/p/67680257\n
     https://zhuanlan.zhihu.com/p/67048151\n
