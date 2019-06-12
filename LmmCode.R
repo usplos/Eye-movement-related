@@ -882,9 +882,9 @@ Data_Filter_Shiny = function(){
 
         textInput('G3','Input the 3rd factor:', NULL),
 
-        textInput('G4','Input the 3rd factor:', NULL),
+        textInput('G4','Input the 4th factor:', NULL),
 
-        textInput('G5','Input the 3rd factor:', NULL),
+        textInput('G5','Input the 5th factor:', NULL),
 
         sliderInput('ZV','Set the Z value to filter',min = 1, max = 5,step = 0.1, value = 3),
 
