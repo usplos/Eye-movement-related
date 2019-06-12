@@ -816,7 +816,7 @@ LMM_Model_Info_Shiny = function(){
 Datafilter = function(NGroup,df, DV,
                       Group1=NULL, Group2=NULL, Group3=NULL, Group4 = NULL, Group5 = NULL, ZV = 3){
   if(NGroup == 0){
-    eval(parse(text = paste0('df1 = df %>% mutate(Zvalue = scale(',DV,'))',' %>% ',
+    eval(parse(text = paste0('df2 = df %>% mutate(Zvalue = scale(',DV,'))',' %>% ',
                              'filter(abs(Zvalue) < ',ZV,')',' %>% ',
                              'select(-Zvalue)')))
   }
