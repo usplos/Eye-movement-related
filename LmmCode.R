@@ -303,7 +303,6 @@ LMMRun_Parallel_shiny = function(){
   print(shinyApp(ui, server))
 }
 
-
 formula_generate_shiny = function(){
   ui <- fluidPage(
     titlePanel('SHINY formulas generator'),
@@ -408,6 +407,8 @@ LMM_Model_Info_Shiny = function(){
         helpText('#######################'),
         helpText('Histogram on each Participants:'),
         checkboxInput('Split.Sub','Whether to plot histogram based on each subject?',F),
+        selectInput('Transfer','Select type of data transfer',
+                    choices = c('Origin', 'Log E', 'Log 10', 'Minus Reverse', 'Minus Reverse Multi 1000')),
         sliderInput('NumCol','How many columns should the histogram be arranged?',min = 1, max = 20,step = 1,value = 3),
         textInput('SubName','Input the name of column indicating subject',NULL),
         textInput('DepenVar','Input the name of column indication dependent variable',NULL),
@@ -467,6 +468,7 @@ LMM_Model_Info_Shiny = function(){
     obs = reactive(input$obs)
 
     Split.Sub = reactive(input$Split.Sub)
+    Transfer = reactive(input$Transfer)
     NumCol = reactive(input$NumCol)
     SubName = reactive(input$SubName)
     DepenVar = reactive(input$DepenVar)
@@ -797,13 +799,20 @@ LMM_Model_Info_Shiny = function(){
           return(NULL)
 
         d = read.csv(inFile$datapath, header = T)
-        Density.Sub = function(df, Sub, DV, NumCol){
+        Density.Sub = function(df, Sub, DV, NumCol, transfer = 'Origin'){
           eval(parse(text = paste0('df$',Sub,' = factor(df$',Sub,')')))
-          eval(parse(text = paste0(' p = ggplot(data = df, aes(x = ',DV,', fill = ',Sub,'))+geom_density()')))
+          eval(parse(text = paste0(' p = ggplot(data = df, aes(x = ',
+                                   switch(transfer,
+                                          'Origin' = DV,
+                                          'Log E' = paste0('log(',DV,')'),
+                                          'Log 10' = paste0('log10(',DV,')'),
+                                          'Minus Reverse' = paste0('-1/',DV),
+                                          'Minus Reverse Multi 1000' = paste0('-1000/',DV)),
+                                   ', fill = ',Sub,'))+geom_density()')))
           eval(parse(text = paste0('p = p + facet_wrap(~',Sub,', ncol = ',NumCol,')')))
           eval(parse(text = paste('p + labs(x = \'',Sub,'\',', y = '\'',DV,'\')')))
         }
-        p = Density.Sub(df = d, Sub = SubName(),DV = DepenVar(),NumCol = NumCol())
+        p = Density.Sub(df = d, Sub = SubName(),DV = DepenVar(),NumCol = NumCol(),transfer = Transfer())
         print(p)
       }
     })
@@ -870,6 +879,7 @@ Datafilter = function(NGroup,df, DV, FilterO = T,
 
   return(df2)
 }
+
 Data_Filter_Shiny = function(){
   ui <- fluidPage(
     titlePanel('SHINY Data filter'),
