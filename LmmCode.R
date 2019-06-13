@@ -410,8 +410,10 @@ LMM_Model_Info_Shiny = function(){
         selectInput('Transfer','Select type of data transfer',
                     choices = c('Origin', 'Log E', 'Log 10', 'Minus Reverse', 'Minus Reverse Multi 1000')),
         sliderInput('NumCol','How many columns should the histogram be arranged?',min = 1, max = 20,step = 1,value = 3),
-        textInput('SubName','Input the name of column indicating subject',NULL),
         textInput('DepenVar','Input the name of column indication dependent variable',NULL),
+        textInput('SubName','Input the name of column indicating subject',NULL),
+        numericInput(inputId = 'Width',label = 'Set the plot Width',value = 800, min = 400, max = 10000,step = 1),
+        numericInput(inputId = 'Height',label = 'Set the plot Height',value = 800, min = 400, max = 10000,step = 1),
 
         helpText('#######################'),
         helpText('Summary and Anova result download:'),
@@ -443,7 +445,9 @@ LMM_Model_Info_Shiny = function(){
         textInput('Xlab','Input the label of x axis:', NULL),
         textInput('LegendM','Input the title of legend:', NULL),
         sliderInput(inputId = 'LabelSize',label = 'Set the size of plot labels and title',min = 10, max = 50,step = 1, value = 10),
-        checkboxInput('Dots','Whether draw raw data (dots)?',F)
+        checkboxInput('Dots','Whether draw raw data (dots)?',F),
+        numericInput(inputId = 'Width2',label = 'Set the plot Width',value = 800, min = 400, max = 10000,step = 1),
+        numericInput(inputId = 'Height2',label = 'Set the plot Height',value = 800, min = 400, max = 10000,step = 1)
       ),
       mainPanel(
         tabsetPanel(type = 'tabs',
@@ -472,6 +476,8 @@ LMM_Model_Info_Shiny = function(){
     NumCol = reactive(input$NumCol)
     SubName = reactive(input$SubName)
     DepenVar = reactive(input$DepenVar)
+    Width = reactive(input$Width)
+    Height = reactive(input$Height)
 
     SimpleEffect = reactive(input$SimpleEffect)
     IVNumber = reactive(input$IVNumber)
@@ -489,6 +495,8 @@ LMM_Model_Info_Shiny = function(){
     Xlab = reactive(input$Xlab)
     LegendM = reactive(input$LegendM)
     LabelSize = reactive(input$LabelSize)
+    Width2 = reactive(input$Width2)
+    Height2 = reactive(input$Height2)
 
     output$DataSummary = renderTable({
       inFile <- input$file1
@@ -789,7 +797,7 @@ LMM_Model_Info_Shiny = function(){
                                    '), axis.text.x = element_text(size = ',LabelSize()-5,'))')))
         }
       }
-    })
+    },width = function() return(Width2()), height = function() return(Height2()))
 
     output$Sub.Plot = renderPlot({
       if(isTRUE(Split.Sub())){
@@ -815,7 +823,8 @@ LMM_Model_Info_Shiny = function(){
         p = Density.Sub(df = d, Sub = SubName(),DV = DepenVar(),NumCol = NumCol(),transfer = Transfer())
         print(p)
       }
-    })
+    },width = function() return(Width()),
+    height = function() return(Height()))
 
   }
 
