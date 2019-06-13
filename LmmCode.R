@@ -451,7 +451,8 @@ LMM_Model_Info_Shiny = function(){
       ),
       mainPanel(
         tabsetPanel(type = 'tabs',
-                    tabPanel('Data Summary',tableOutput("DataSummary")),
+                    tabPanel('Data Summary',tableOutput("DataSummary"))),
+        tabsetPanel(type = 'tabs',
                     tabPanel('Sub.Histogram',plotOutput('Sub.Plot',inline = T))),
         tabsetPanel(type = 'tabs',
                     tabPanel('Model Summary',verbatimTextOutput("summary")),
