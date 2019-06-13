@@ -412,8 +412,8 @@ LMM_Model_Info_Shiny = function(){
         sliderInput('NumCol','How many columns should the histogram be arranged?',min = 1, max = 20,step = 1,value = 3),
         textInput('DepenVar','Input the name of column indication dependent variable',NULL),
         textInput('SubName','Input the name of column indicating subject',NULL),
-        numericInput(inputId = 'Width',label = 'Set the plot Width',value = 800, min = 400, max = 10000,step = 1),
-        numericInput(inputId = 'Height',label = 'Set the plot Height',value = 800, min = 400, max = 10000,step = 1),
+        numericInput(inputId = 'Width',label = 'Set the plot Width',value = 400, min = 400, max = 10000,step = 1),
+        numericInput(inputId = 'Height',label = 'Set the plot Height',value = 400, min = 400, max = 10000,step = 1),
 
         helpText('#######################'),
         helpText('Summary and Anova result download:'),
@@ -437,7 +437,7 @@ LMM_Model_Info_Shiny = function(){
         selectInput('Geomtype','Select the geometry to draw',
                     choices = c('bar','line')),
         selectInput('Themes','Select the theme of plot:',
-                    choices = c('origin','APA','Solar','Wall Street Journal')),
+                    choices = c('origin','APA','Solar')),
         selectInput('Color','Select the color palette',
                     choices = c('Set1','Set2','Set3')),
         textInput('Title','Input the title of plot:',NULL),
@@ -458,7 +458,8 @@ LMM_Model_Info_Shiny = function(){
                     tabPanel('Model Summary',verbatimTextOutput("summary")),
                     tabPanel('Anova',tableOutput("Anova"))),
         tabsetPanel(type = 'tabs',
-                    tabPanel('Simple Effect',tableOutput('Emmeans'),tableOutput('Comparison')),
+                    tabPanel('Simple Effect',tableOutput('Emmeans'),tableOutput('Comparison'))),
+        tabsetPanel(type = 'tabs',
                     tabPanel('Plot', plotOutput('Plot',width = 600, height = 600)))
 
       )
@@ -762,7 +763,8 @@ LMM_Model_Info_Shiny = function(){
                                                  '+jtools::theme_apa()',
                                                  ifelse(Themes() %in% 'Solar',
                                                         '+ggthemes::theme_solarized()',
-                                                        '+ggthemes::theme_wsj()'))),
+                                                        ifelse(Themes() %in% 'Wall Street Journal',
+                                                               '+ggthemes::theme_wsj()','')))),
                                    '+labs(y = Ylab(), x = Xlab(), title = Title())',
                                    ' + theme(plot.title = element_text(hjust = 0.5, size = ',LabelSize()+5,'),',
                                    ' axis.title.x = element_text(size = ',LabelSize(),
