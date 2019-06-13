@@ -388,6 +388,7 @@ LMM_Model_Info_Shiny = function(){
 
       sidebarPanel(
         helpText('Model Building Part:'),
+        selectInput('HLM','Whether to perform the HLM or GLM?',choices = c('HLM','GLM')),
         textInput('Formula','Input the formula:',NULL),
 
         selectInput('Family', 'Select the distribution family of dependent variable:',
@@ -468,6 +469,7 @@ LMM_Model_Info_Shiny = function(){
 
   server <- function(input, output) {
 
+    HLM = reactive(input$HLM)
     Formula = reactive(input$Formula)
 
     Family = reactive(input$Family)
@@ -528,13 +530,13 @@ LMM_Model_Info_Shiny = function(){
       options(contrasts = c(Contrasts(),'contr.poly'))
 
       if(Family() %in% 'gaussian'){
-        M = lmer(data = d,
-                 formula = as.formula(Formula()))
+        eval(parse(text = paste0('M = ', ifelse(HLM() %in% 'HLM', 'lmer','lm'),
+                                 '(data = d,formula = as.formula(Formula()))')))
         summary(M)
       }else{
-        M = glmer(data = d,
-                  formula = as.formula(Formula()),
-                  family = Family())
+        eval(parse(text = paste0('M = ', ifelse(HLM() %in% 'HLM', 'glmer','glm'),
+                                 '(data = d,formula = as.formula(Formula()),family = ', Family(),')')))
+
         summary(M)
       }
 
@@ -552,12 +554,11 @@ LMM_Model_Info_Shiny = function(){
         d = read.csv(inFile$datapath, header = T)
 
         if(Family() %in% 'gaussian'){
-          M = lmer(data = d,
-                   formula = as.formula(Formula()))
+          eval(parse(text = paste0('M = ', ifelse(HLM() %in% 'HLM', 'lmer','lm'),
+                                   '(data = d,formula = as.formula(Formula()))')))
         }else{
-          M = glmer(data = d,
-                    formula = as.formula(Formula()),
-                    family = Family())
+          eval(parse(text = paste0('M = ', ifelse(HLM() %in% 'HLM', 'glmer','glm'),
+                                   '(data = d,formula = as.formula(Formula()),family = ', Family(),')')))
         }
         M1 = round(summary(M)$coef,digits = 3)
         M1 = bind_cols(tibble(Effect = rownames(M1)),
@@ -574,14 +575,14 @@ LMM_Model_Info_Shiny = function(){
       d = read.csv(inFile$datapath, header = T)
 
       if(Family() %in% 'gaussian'){
-        M = lmer(data = d,
-                 formula = as.formula(Formula())) %>% anova()
+        eval(parse(text = paste0('M = ', ifelse(HLM() %in% 'HLM', 'lmer','lm'),
+                                 '(data = d,formula = as.formula(Formula())) %>% anova()')))
+
         bind_cols(tibble(Effect = rownames(M)),
                   as_tibble(M))
       }else{
-        M = glmer(data = d,
-                  formula = as.formula(Formula()),
-                  family = Family()) %>% anova()
+        eval(parse(text = paste0('M = ', ifelse(HLM() %in% 'HLM', 'glmer','glm'),
+                                 '(data = d,formula = as.formula(Formula()),family = ', Family(),') %>% anova()')))
         bind_cols(tibble(Effect = rownames(M)),
                   as_tibble(M))
       }
@@ -601,12 +602,11 @@ LMM_Model_Info_Shiny = function(){
         d = read.csv(inFile$datapath, header = T)
 
         if(Family() %in% 'gaussian'){
-          M = lmer(data = d,
-                   formula = as.formula(Formula()))
+          eval(parse(text = paste0('M = ', ifelse(HLM() %in% 'HLM', 'lmer','lm'),
+                                   '(data = d,formula = as.formula(Formula()))')))
         }else{
-          M = glmer(data = d,
-                    formula = as.formula(Formula()),
-                    family = Family())
+          eval(parse(text = paste0('M = ', ifelse(HLM() %in% 'HLM', 'glmer','glm'),
+                                   '(data = d,formula = as.formula(Formula()),family = ', Family(),')')))
         }
         M1 = round(anova(M),digits = 3)
         M1 = bind_cols(tibble(Effect = rownames(M1)),
@@ -624,12 +624,11 @@ LMM_Model_Info_Shiny = function(){
 
         d = read.csv(inFile$datapath, header = T)
         if(Family() %in% 'gaussian'){
-          M = lmer(data = d,
-                   formula = as.formula(Formula()))
+          eval(parse(text = paste0('M = ', ifelse(HLM() %in% 'HLM', 'lmer','lm'),
+                                   '(data = d,formula = as.formula(Formula()))')))
         }else{
-          M = glmer(data = d,
-                    formula = as.formula(Formula()),
-                    family = Family())
+          eval(parse(text = paste0('M = ', ifelse(HLM() %in% 'HLM', 'glmer','glm'),
+                                   '(data = d,formula = as.formula(Formula()),family = ', Family(),')')))
         }
         if(IVNumber() == 2){
           eval(parse(text = paste0('emmeans(M, pairwise~',Predictor(),'|',Modulator1(),')$emm')))
@@ -654,12 +653,11 @@ LMM_Model_Info_Shiny = function(){
 
           d = read.csv(inFile$datapath, header = T)
           if(Family() %in% 'gaussian'){
-            M = lmer(data = d,
-                     formula = as.formula(Formula()))
+            eval(parse(text = paste0('M = ', ifelse(HLM() %in% 'HLM', 'lmer','lm'),
+                                     '(data = d,formula = as.formula(Formula()))')))
           }else{
-            M = glmer(data = d,
-                      formula = as.formula(Formula()),
-                      family = Family())
+            eval(parse(text = paste0('M = ', ifelse(HLM() %in% 'HLM', 'glmer','glm'),
+                                     '(data = d,formula = as.formula(Formula()),family = ', Family(),')')))
           }
           options(digits = 3)
           if(IVNumber() == 2){
@@ -682,12 +680,11 @@ LMM_Model_Info_Shiny = function(){
 
         d = read.csv(inFile$datapath, header = T)
         if(Family() %in% 'gaussian'){
-          M = lmer(data = d,
-                   formula = as.formula(Formula()))
+          eval(parse(text = paste0('M = ', ifelse(HLM() %in% 'HLM', 'lmer','lm'),
+                                   '(data = d,formula = as.formula(Formula()))')))
         }else{
-          M = glmer(data = d,
-                    formula = as.formula(Formula()),
-                    family = Family())
+          eval(parse(text = paste0('M = ', ifelse(HLM() %in% 'HLM', 'glmer','glm'),
+                                   '(data = d,formula = as.formula(Formula()),family = ', Family(),')')))
         }
         if(IVNumber() == 2){
           eval(parse(text = paste0('emmeans(M, pairwise~',Predictor(),'|',Modulator1(),')$contr %>% as_tibble()')))
@@ -712,12 +709,11 @@ LMM_Model_Info_Shiny = function(){
 
           d = read.csv(inFile$datapath, header = T)
           if(Family() %in% 'gaussian'){
-            M = lmer(data = d,
-                     formula = as.formula(Formula()))
+            eval(parse(text = paste0('M = ', ifelse(HLM() %in% 'HLM', 'lmer','lm'),
+                                     '(data = d,formula = as.formula(Formula()))')))
           }else{
-            M = glmer(data = d,
-                      formula = as.formula(Formula()),
-                      family = Family())
+            eval(parse(text = paste0('M = ', ifelse(HLM() %in% 'HLM', 'glmer','glm'),
+                                     '(data = d,formula = as.formula(Formula()),family = ', Family(),')')))
           }
           options(digits = 3)
           if(IVNumber() == 2){
@@ -740,12 +736,11 @@ LMM_Model_Info_Shiny = function(){
 
         d = read.csv(inFile$datapath, header = T)
         if(Family() %in% 'gaussian'){
-          M = lmer(data = d,
-                   formula = as.formula(Formula()))
+          eval(parse(text = paste0('M = ', ifelse(HLM() %in% 'HLM', 'lmer','lm'),
+                                   '(data = d,formula = as.formula(Formula()))')))
         }else{
-          M = glmer(data = d,
-                    formula = as.formula(Formula()),
-                    family = Family())
+          eval(parse(text = paste0('M = ', ifelse(HLM() %in% 'HLM', 'glmer','glm'),
+                                   '(data = d,formula = as.formula(Formula()),family = ', Family(),')')))
         }
         if(IVNumber() == 2){
           eval(parse(text = paste0('interactions::cat_plot(model = M, pred = ',Predictor(),', ',
