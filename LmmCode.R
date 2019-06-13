@@ -452,12 +452,13 @@ LMM_Model_Info_Shiny = function(){
       mainPanel(
         tabsetPanel(type = 'tabs',
                     tabPanel('Data Summary',tableOutput("DataSummary")),
+                    tabPanel('Sub.Histogram',plotOutput('Sub.Plot',inline = T))),
+        tabsetPanel(type = 'tabs',
                     tabPanel('Model Summary',verbatimTextOutput("summary")),
-                    tabPanel('Anova',tableOutput("Anova")),
+                    tabPanel('Anova',tableOutput("Anova"))),
+        tabsetPanel(type = 'tabs',
                     tabPanel('Simple Effect',tableOutput('Emmeans'),tableOutput('Comparison')),
-                    tabPanel('Plot', plotOutput('Plot',width = 600, height = 600)),
-                    tabPanel('Sub.Histogram',plotOutput('Sub.Plot',width = 800,height = 800)))
-
+                    tabPanel('Plot', plotOutput('Plot',width = 600, height = 600)))
 
       )
     )
