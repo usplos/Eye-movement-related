@@ -440,15 +440,15 @@ LMM_Model_Info_Shiny = function(){
         selectInput('Themes','Select the theme of plot:',
                     choices = c('origin','APA','Solar')),
         selectInput('Color','Select the color palette',
-                    choices = c('Set1','Set2','Set3')),
+                    choices = c('Set1','Set2','Set3','Grey')),
         textInput('Title','Input the title of plot:',NULL),
         textInput('Ylab','Input the label of y axis:', NULL),
         textInput('Xlab','Input the label of x axis:', NULL),
         textInput('LegendM','Input the title of legend:', NULL),
         sliderInput(inputId = 'LabelSize',label = 'Set the size of plot labels and title',min = 10, max = 50,step = 1, value = 10),
         checkboxInput('Dots','Whether draw raw data (dots)?',F),
-        numericInput(inputId = 'Width2',label = 'Set the plot Width',value = 800, min = 400, max = 10000,step = 1),
-        numericInput(inputId = 'Height2',label = 'Set the plot Height',value = 800, min = 400, max = 10000,step = 1)
+        numericInput(inputId = 'Width2',label = 'Set the plot Width',value = 400, min = 400, max = 10000,step = 1),
+        numericInput(inputId = 'Height2',label = 'Set the plot Height',value = 400, min = 400, max = 10000,step = 1)
       ),
       mainPanel(
         tabsetPanel(type = 'tabs',
@@ -461,7 +461,7 @@ LMM_Model_Info_Shiny = function(){
         tabsetPanel(type = 'tabs',
                     tabPanel('Simple Effect',tableOutput('Emmeans'),tableOutput('Comparison'))),
         tabsetPanel(type = 'tabs',
-                    tabPanel('Plot', plotOutput('Plot',width = 600, height = 600)))
+                    tabPanel('Plot', plotOutput('Plot',inline = T)))
 
       )
     )
@@ -750,8 +750,10 @@ LMM_Model_Info_Shiny = function(){
                                    'legend.main = \'',LegendM(),'\',',
                                    ifelse(Geomtype() %in% 'bar','','dodge.width = 0.3,'),
                                    'point.alpha = 0.1,',
-                                   'colors = \'', Color(),'\',',
-                                   'plot.points = ',Dots(),')',
+                                   ifelse(Color() %in% c('Set1','Set2','Set3'),
+                                          paste0('colors = \'', Color(),'\','),
+                                          'colors = c(\'grey20\', \'grey80\'),'),
+                                   'plot.points = ',Dots(),', geom.alpha = 0.8)',
                                    ifelse(Themes() %in% 'origin',
                                           '',
                                           ifelse(Themes() %in% 'APA',
@@ -777,8 +779,10 @@ LMM_Model_Info_Shiny = function(){
                                    'legend.main = \'',LegendM(),'\',',
                                    ifelse(Geomtype() %in% 'bar','','dodge.width = 0.3,'),
                                    'point.alpha = 0.1,',
-                                   'colors = \'', Color(),'\',',
-                                   'plot.points = ',Dots(),')',
+                                   ifelse(Color() %in% c('Set1','Set2','Set3'),
+                                          paste0('colors = \'', Color(),'\','),
+                                          'colors = c(\'grey20\', \'grey80\'),'),
+                                   'plot.points = ',Dots(),', geom.alpha = 0.8)',
                                    ifelse(Themes() %in% 'origin',
                                           '',
                                           ifelse(Themes() %in% 'APA',
