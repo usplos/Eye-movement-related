@@ -735,6 +735,11 @@ LMM_Model_Info_Shiny = function(){
           return(NULL)
 
         d = read.csv(inFile$datapath, header = T)
+        GreyBreaker = function(Modulator){
+          Number = eval(parse(text = paste0('length(unique(d$',Modulator,'))')))
+          Breaker = seq(from=20, to = 80,round((80-20)%/%(Number-1)))
+          return(paste(paste0('\'grey',Breaker,'\''), collapse = ','))
+        }
         if(Family() %in% 'gaussian'){
           eval(parse(text = paste0('M = ', ifelse(HLM() %in% 'HLM', 'lmer','lm'),
                                    '(data = d,formula = as.formula(Formula()))')))
@@ -752,7 +757,7 @@ LMM_Model_Info_Shiny = function(){
                                    'point.alpha = 0.1,',
                                    ifelse(Color() %in% c('Set1','Set2','Set3'),
                                           paste0('colors = \'', Color(),'\','),
-                                          'colors = c(\'grey20\', \'grey80\'),'),
+                                          paste0('colors = c(',GreyBreaker(Modulator1()),'),')),
                                    'plot.points = ',Dots(),', geom.alpha = 0.8)',
                                    ifelse(Themes() %in% 'origin',
                                           '',
