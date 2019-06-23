@@ -1024,37 +1024,49 @@ Data_Filter_Shiny = function(){
 }
 
 ####################
-PowerTable = function(df,formula, family, fixedeffect, subject, minsub, maxsub, steps){
+PowerTable = function(df,formula, family, fixedeffect, subject, minsub, maxsub, steps, Ncore = 4){
   NumP = c(eval(parse(text = paste0('length(unique(df','$',subject,'))'))),
            seq(from = minsub, to = maxsub, steps))
-  Number = numeric(length = length(NumP))
-  Power = numeric(length = length(NumP))
-  ConfUp = numeric(length = length(NumP))
-  ConfLow = numeric(length = length(NumP))
-
   eval(parse(text = paste0('M = ',ifelse(family == 'gaussian','lmer(','glmer('),
                            'data = df', ',',
                            formula,
                            ifelse(family == 'gaussian',')',
                                   paste0(', family = \'',family,'\')')))))
   eval(parse(text = paste0('PA = powerSim(M, fixed(\'',fixedeffect,'\'), nsim = 100, alpha = 0.05)')))
-  Number[1] = NumP[1]
-  Power[1] = PA$x
-  ConfLow[1] = binom.test(x = sum(PA$pval<0.05),n = length(PA$pval),p = 0.5)$conf.int[1]
-  ConfUp[1] = binom.test(x = sum(PA$pval<0.05),n = length(PA$pval),p = 0.5)$conf.int[2]
+  Number = NumP[1]
+  Power = PA$x
+  ConfLow = binom.test(x = sum(PA$pval<0.05),n = length(PA$pval),p = 0.5)$conf.int[1]*100
+  ConfUp = binom.test(x = sum(PA$pval<0.05),n = length(PA$pval),p = 0.5)$conf.int[2]*100
+  FirstOne = data.frame(SubNumber = Number,
+                        PowerValue = Power,
+                        ConfUp,ConfLow)
 
-  for(ss in 2:length(NumP)){
+  PowerOne = function(ss){
+    library(simr)
     eval(parse(text = paste0('M2 = extend(M, along = \'',subject,'\',n = ',NumP[ss],')')))
     eval(parse(text = paste0('PA = powerSim(M2, fixed(\'',fixedeffect,'\'), nsim = 100, alpha = 0.05)')))
-    Number[ss] = NumP[ss]
-    Power[ss] = PA$x
-    ConfLow[ss] = binom.test(x = sum(PA$pval<0.05),n = length(PA$pval),p = 0.5)$conf.int[1]
-    ConfUp[ss] = binom.test(x = sum(PA$pval<0.05),n = length(PA$pval),p = 0.5)$conf.int[2]
+    Number = NumP[ss]
+    Power = PA$x
+    ConfLow = binom.test(x = sum(PA$pval<0.05),n = length(PA$pval),p = 0.5)$conf.int[1]*100
+    ConfUp = binom.test(x = sum(PA$pval<0.05),n = length(PA$pval),p = 0.5)$conf.int[2]*100
+    return(data.frame(SubNumber = Number,
+                      PowerValue = Power,
+                      ConfUp,ConfLow))
   }
 
-  return(tibble(SubNumber = Number,
-                PowerValue = Power,
-                ConfUp,ConfLow))
+  tic = Sys.time()
+  SS = sample(2:length(NumP),length(NumP)-1)
+  cat(length(NumP)-1, 'Power calculating are running with', Ncore, ' parallel cores..............\n\n')
+  library(parallel)
+  cl <- makeCluster(Ncore)
+  clusterExport(cl, c('subject','NumP','fixedeffect','M','df','formula'), envir = environment())
+  clusterEvalQ(cl,c('simr','tidyverse'))
+  Results.DF <- do.call('rbind',parLapply(cl,SS, PowerOne))
+  stopCluster(cl)
+
+  DF = bind_rows(FirstOne, Results.DF) %>% arrange(SubNumber)
+  print(Sys.time()-tic)
+  return(DF)
 }
 Power_Shiny = function(){
   ui <- fluidPage(
@@ -1077,6 +1089,8 @@ Power_Shiny = function(){
         numericInput('MaxSub','Input the minimum number of participants to check:',80),
 
         sliderInput('Step','Set the step to increase:',min = 1, max = 20,step = 1,value = 10),
+
+        sliderInput('Ncore','Set the paralle cores to run',min = 1, max = 20, step = 1, value = 4),
 
         fileInput("file1", "Choose CSV File of your data",
                   accept = c(
@@ -1109,6 +1123,7 @@ Power_Shiny = function(){
     MinSub = reactive(input$MinSub)
     MaxSub = reactive(input$MaxSub)
     Step = reactive(input$Step)
+    Ncore = reactive(input$Ncore)
     obs = reactive(input$obs)
 
     df = reactive({
@@ -1126,7 +1141,7 @@ Power_Shiny = function(){
     Table = eventReactive(input$Run,{
       PowerTable(formula = Formula(),family = Family(),
                  fixedeffect = FixedEffect(),subject = Subject(),
-                 minsub = MinSub(),maxsub = MaxSub(),steps = Step(),df = df())
+                 minsub = MinSub(),maxsub = MaxSub(),steps = Step(),df = df(),Ncore = Ncore())
     },ignoreNULL = F)
 
     output$Power = renderTable({
@@ -1136,7 +1151,7 @@ Power_Shiny = function(){
     output$Plot = renderPlot({
       ggplot(data = Table(), aes(x = SubNumber, y = PowerValue))+
         geom_line()+geom_point(size=2)+
-        geom_errorbar(aes(x = SubNumber, ymax = ConfUp*100, ymin = ConfLow*100), width = 0.1)+
+        geom_errorbar(aes(x = SubNumber, ymax = ConfUp, ymin = ConfLow), width = 0.1)+
         geom_hline(aes(yintercept = 80), linetype = 'dashed')
 
     })
