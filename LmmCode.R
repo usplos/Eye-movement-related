@@ -7,6 +7,8 @@ if(!require(lmerTest)){install.packages('lmerTest')}
 if(!require(emmeans)){install.packages('emmeans')}
 if(!require(jtools)){install.packages('jtools')}
 if(!require(ggthemes)){install.packages('ggthemes')}
+if(!require(simr)){install.packages('simr')}
+if(!require(ggbeeswarm)){install.packages('ggbeeswarm')}
 
 formula_generate = function(DV, IV, Cluster){
   library(tidyverse)
@@ -123,79 +125,436 @@ LMMRun_Once = function(df, Formula, Family=NULL){
   }
 }
 
-LMMRun_Parallel = function(df, DV=NULL, IV=NULL, Cluster=NULL, Ifrun = F, output = NULL,
-                           Manual = F, Manualcodefilename = NULL, Ncore = 4, Family = NULL){
+ViolinRawdata = function(df,
+                         IVNumber = 2,
+                         DepenVar, 
+                         Modu1, Modu2, Pred,
+                         Themes, Color,
+                         Title, Xlab, Ylab, LegendM, LabelSize){
+  Height = eval(parse(text = paste0('(max(df$',DepenVar,')-min(df$',DepenVar,'))*0.007')))
+  eval(parse(text = paste0('ggplot(data = df, aes(x = ',Pred,',y = ',DepenVar,', color = ',Modu1,'))+',
+                           'geom_violin(alpha = 0,position = position_dodge(1))+',
+                           'geom_quasirandom(dodge.width = 1, alpha = 0.2,bandwidth = 0.1)+',
+                           'geom_tile(data = df %>% group_by(', Pred, ',', Modu1, ifelse(IVNumber == 2,')',
+                                                                                         paste0(',',Modu2,')')),
+                           ' %>% summarize(M = mean(',DepenVar,')),',
+                           'aes(x = ',Pred,',y = M, fill = ',Modu1,'),height = Height, width = 0.5, position = position_dodge(1), show.legend = F)',
+                           ifelse(IVNumber == 3,
+                                  paste0('+facet_wrap(~',Modu2,')'),''),
+                           switch(Themes,
+                                  'origin' = '',
+                                  'APA' = '+jtools::theme_apa()',
+                                  'Solar' = '+ggthemes::theme_solarized()'),
+                           switch(Color,
+                                  'Set1' = '+scale_color_brewer(palette = \'Set1\')+scale_fill_brewer(palette = \'Set1\')',
+                                  'Set2' = '+scale_color_brewer(palette = \'Set2\')+scale_fill_brewer(palette = \'Set2\')',
+                                  'Set3' = '+scale_color_brewer(palette = \'Set3\')+scale_fill_brewer(palette = \'Set3\')',
+                                  'Grey' = paste0('+scale_color_manual(values = c(',GreyBreaker(df = df(),Modulator = Modulator1()),'))+scale_fill_manual(values = c(',GreyBreaker(df = df(),Modulator = Modulator1()),'))')),
+                           '+labs(y = \'',Ylab,'\', x = \'',Xlab,'\', title = \'',Title,'\', color = \'',LegendM,'\')',
+                           ' + theme(plot.title = element_text(hjust = 0.5, size = ',LabelSize+5,'),',
+                           ' axis.title.x = element_text(size = ',LabelSize,
+                           '), axis.title.y = element_text(size = ',LabelSize,
+                           '), legend.text = element_text(size = ',LabelSize-5,
+                           '), legend.title = element_text(size = ',LabelSize,
+                           '), axis.text.y = element_text(size = ',LabelSize-5,
+                           '), axis.text.x = element_text(size = ',LabelSize-5,'))')))
+}
 
-  library(lmerTest)
-  library(tidyverse)
+ViolinBox = function(df,
+                     IVNumber = 2,
+                     DepenVar, 
+                     Modu1, Modu2, Pred,
+                     Themes, Color,
+                     Title, Xlab, Ylab, LegendM, LabelSize){
+  eval(parse(text = paste0('ggplot(data = df, aes(x = ',Pred,',y = ',DepenVar,', color = ',Modu1,'))+',
+                           'geom_violin(alpha = 0,position = position_dodge(1))+',
+                           'geom_boxplot(position = position_dodge(1),width = 0.25,show.legend = F)',
+                           ifelse(IVNumber == 3,
+                                  paste0('+facet_wrap(~',Modu2,')'),''),
+                           switch(Themes,
+                                  'origin' = '',
+                                  'APA' = '+jtools::theme_apa()',
+                                  'Solar' = '+ggthemes::theme_solarized()'),
+                           switch(Color,
+                                  'Set1' = '+scale_color_brewer(palette = \'Set1\')+scale_fill_brewer(palette = \'Set1\')',
+                                  'Set2' = '+scale_color_brewer(palette = \'Set2\')+scale_fill_brewer(palette = \'Set2\')',
+                                  'Set3' = '+scale_color_brewer(palette = \'Set3\')+scale_fill_brewer(palette = \'Set3\')',
+                                  'Grey' = paste0('+scale_color_manual(values = c(',GreyBreaker(df = df(),Modulator = Modulator1()),'))+scale_fill_manual(values = c(',GreyBreaker(df = df(),Modulator = Modulator1()),'))')),
+                           '+labs(y = \'',Ylab,'\', x = \'',Xlab,'\', title = \'',Title,'\', color = \'',LegendM,'\')',
+                           ' + theme(plot.title = element_text(hjust = 0.5, size = ',LabelSize+5,'),',
+                           ' axis.title.x = element_text(size = ',LabelSize,
+                           '), axis.title.y = element_text(size = ',LabelSize,
+                           '), legend.text = element_text(size = ',LabelSize-5,
+                           '), legend.title = element_text(size = ',LabelSize,
+                           '), axis.text.y = element_text(size = ',LabelSize-5,
+                           '), axis.text.x = element_text(size = ',LabelSize-5,'))')))
+}
 
-  if(!isTRUE(Manual)){
-    Formulas = formula_generate(DV = DV, IV = IV, Cluster = Cluster)
-  }else{
-    Formulas = read_csv(Manualcodefilename) %>% .[[1]]
+LMM_Model_Info_Shiny = function(){
+  ui <- fluidPage(
+    titlePanel('SHINY linear mixed model builder'),
+    sidebarLayout(
+      
+      sidebarPanel(
+        helpText('Model Building Part:'),
+        selectInput('HLM','Whether to perform the HLM or GLM?',choices = c('HLM','GLM')),
+        textInput('Formula','Input the formula:',NULL),
+        
+        selectInput('Family', 'Select the distribution family of dependent variable:',
+                    choices = c('gaussian','binomial','poisson')),
+        
+        selectInput('Contrasts','Select the type of contrasts:',
+                    choices = c('sum','treatment')),
+        
+        fileInput("file1", "Choose CSV File of your data",
+                  accept = c(
+                    "text/csv",
+                    "text/comma-separated-values,text/plain",
+                    ".csv")
+        ),
+        numericInput("obs", "Set the number of observations to view:", 6),
+        
+        helpText('#######################'),
+        helpText('Histogram on each Participants:'),
+        checkboxInput('Split.Sub','Whether to plot histogram based on each subject?',F),
+        selectInput('Transfer','Select type of data transfer',
+                    choices = c('Origin', 'Log E', 'Log 10', 'Minus Reverse', 'Minus Reverse Multi 1000')),
+        sliderInput('NumCol','How many columns should the histogram be arranged?',min = 1, max = 20,step = 1,value = 3),
+        textInput('DepenVar','Input the name of column indication dependent variable',NULL),
+        textInput('SubName','Input the name of column indicating subject',NULL),
+        numericInput(inputId = 'Width',label = 'Set the plot Width',value = 400, min = 400, max = 10000,step = 1),
+        numericInput(inputId = 'Height',label = 'Set the plot Height',value = 400, min = 400, max = 10000,step = 1),
+        
+        helpText('#######################'),
+        helpText('Summary and Anova result download:'),
+        downloadButton("downloadSummary", "Download the Summary table"),
+        downloadButton("downloadAnova", "Download the Anova table"),
+        
+        helpText('#######################'),
+        helpText('Simple effect analysis performer:'),
+        checkboxInput('SimpleEffect',label = 'Whether to preform the simple effect analysis?',value = F),
+        selectInput('IVNumber','Select the number of fixed factors',choices = c(2,3)),
+        textInput('Predictor','Input the predictor`s name',NULL),
+        textInput('Modulator1','Input the 1st modulator`s name',NULL),
+        textInput('Modulator2','Input the 2nd modulator`s name if have',NULL),
+        
+        downloadButton("downloadEmmeans", "Download the Emmeans table"),
+        downloadButton("downloadComparison", "Download the Comparison table"),
+        
+        helpText('#######################'),
+        helpText('Set the parameters to plot:'),
+        helpText('NOTE! Plot is based on the parameter you set in Simple effect analysis'),
+        checkboxInput('Plot','Whether to plot',F),
+        selectInput('Geomtype','Select the geometry to draw',
+                    choices = c('bar','line','violin plus raw data','violin plus boxplot')),
+        textInput('DepenVar2','Input the name of column indication dependent variable to plot violin',NULL),
+        selectInput('Themes','Select the theme of plot:',
+                    choices = c('origin','APA','Solar')),
+        selectInput('Color','Select the color palette',
+                    choices = c('Set1','Set2','Set3','Grey')),
+        textInput('Title','Input the title of plot:',NULL),
+        textInput('Ylab','Input the label of y axis:', NULL),
+        textInput('Xlab','Input the label of x axis:', NULL),
+        textInput('LegendM','Input the title of legend:', NULL),
+        sliderInput(inputId = 'LabelSize',label = 'Set the size of plot labels and title',min = 10, max = 50,step = 1, value = 10),
+        checkboxInput('Dots','Whether draw raw data (dots)?',F),
+        numericInput(inputId = 'Width2',label = 'Set the plot Width',value = 400, min = 400, max = 10000,step = 1),
+        numericInput(inputId = 'Height2',label = 'Set the plot Height',value = 400, min = 400, max = 10000,step = 1)
+      ),
+      mainPanel(
+        tabsetPanel(type = 'tabs',
+                    tabPanel('Data Summary',tableOutput("DataSummary"))),
+        tabsetPanel(type = 'tabs',
+                    tabPanel('Sub.Histogram',plotOutput('Sub.Plot',inline = T))),
+        tabsetPanel(type = 'tabs',
+                    tabPanel('Model Summary',verbatimTextOutput("summary")),
+                    tabPanel('Anova',tableOutput("Anova"))),
+        tabsetPanel(type = 'tabs',
+                    tabPanel('Simple Effect',tableOutput('Emmeans'),tableOutput('Comparison'))),
+        tabsetPanel(type = 'tabs',
+                    tabPanel('Plot', plotOutput('Plot',inline = T)))
+        
+      )
+    )
+  )
+  
+  server <- function(input, output) {
+    
+    HLM = reactive(input$HLM)
+    Formula = reactive(input$Formula)
+    
+    Family = reactive(input$Family)
+    
+    obs = reactive(input$obs)
+    
+    Split.Sub = reactive(input$Split.Sub)
+    Transfer = reactive(input$Transfer)
+    NumCol = reactive(input$NumCol)
+    SubName = reactive(input$SubName)
+    DepenVar = reactive(input$DepenVar)
+    Width = reactive(input$Width)
+    Height = reactive(input$Height)
+    
+    SimpleEffect = reactive(input$SimpleEffect)
+    IVNumber = reactive(input$IVNumber)
+    Predictor = reactive(input$Predictor)
+    Modulator1 = reactive(input$Modulator1)
+    Modulator2 = reactive(input$Modulator2)
+    
+    PLOT = reactive(input$Plot)
+    Geomtype = reactive(input$Geomtype)
+    DepenVar2 = reactive(input$DepenVar2)
+    Themes = reactive(input$Themes)
+    Color = reactive(input$Color)
+    Dots = reactive(input$Dots)
+    Title = reactive(input$Title)
+    Ylab = reactive(input$Ylab)
+    Xlab = reactive(input$Xlab)
+    LegendM = reactive(input$LegendM)
+    LabelSize = reactive(input$LabelSize)
+    Width2 = reactive(input$Width2)
+    Height2 = reactive(input$Height2)
+    
+    Contrasts = reactive({
+      switch(input$Contrasts,
+             'sum' = 'contr.sum',
+             'treatment' = 'contr.treatment')
+    })
+    
+    df = reactive({
+      inFile <- input$file1
+      
+      if (is.null(inFile))
+        return(NULL)
+      
+      read.csv(inFile$datapath, header = T)
+    })
+    
+    M = reactive({
+      options(contrasts = c(Contrasts(),'contr.poly'))
+      if(Family() %in% 'gaussian'){
+        eval(parse(text = paste0(ifelse(HLM() %in% 'HLM', 'lmer','lm'),
+                                 '(data = df(),formula = as.formula(Formula()))')))
+        
+      }else{
+        eval(parse(text = paste0(ifelse(HLM() %in% 'HLM', 'glmer','glm'),
+                                 '(data = df(),formula = as.formula(Formula()),family = ', Family(),')')))
+        
+        
+      }
+    })
+    
+    output$DataSummary = renderTable({
+      
+      head(df(),n = obs())
+    })
+    
+    output$summary = renderPrint({
+      summary(M())
+    })
+    output$downloadSummary <- downloadHandler(
+      filename = function() {
+        paste(input$DV,'Fixed_Effect_Table', ".csv", sep = "")
+      },
+      content = function(file) {
+        
+        M1 = round(summary(M())$coef,digits = 3)
+        M1 = bind_cols(tibble(Effect = rownames(M1)),
+                       as_tibble(M1))
+        write.csv(M1, file, row.names = FALSE)
+      }
+    )
+    output$Anova = renderTable({
+      M = anova(M())
+      bind_cols(tibble(Effect = rownames(M)),
+                as_tibble(M))
+      
+      
+    })
+    
+    output$downloadAnova <- downloadHandler(
+      
+      filename = function() {
+        paste(input$DV,'Anova_Table', ".csv", sep = "")
+      },
+      content = function(file) {
+        M1 = round(anova(M()),digits = 3)
+        M1 = bind_cols(tibble(Effect = rownames(M1)),
+                       as_tibble(M1))
+        write.csv(M1, file, row.names = FALSE)
+      }
+    )
+    
+    output$Emmeans = renderTable({
+      if(isTRUE(SimpleEffect())){
+        
+        if(IVNumber() == 2){
+          eval(parse(text = paste0('emmeans(M(), pairwise~',Predictor(),'|',Modulator1(),')$emm')))
+        }else{
+          eval(parse(text = paste0('emmeans(M(), pairwise~',Predictor(),'|',Modulator1(),'|',Modulator2(),')$emm')))
+        }
+      }
+      
+    })
+    
+    output$downloadEmmeans = downloadHandler(
+      
+      filename = function() {
+        paste(input$DV,'Emmeans_Table', ".csv", sep = "")
+      },
+      content = function(file) {
+        if(isTRUE(SimpleEffect())){
+          
+          options(digits = 3)
+          if(IVNumber() == 2){
+            eval(parse(text = paste0('M1 = emmeans(M(), pairwise~',Predictor(),'|',Modulator1(),')$emm %>% as_tibble()')))
+          }else{
+            eval(parse(text = paste0('M1 = emmeans(M(), pairwise~',Predictor(),'|',Modulator1(),'|',Modulator2(),')$emm %>% as_tibble()')))
+          }
+          
+        }
+        write.csv(M1, file, row.names = FALSE)
+      }
+    )
+    
+    output$Comparison = renderTable({
+      if(isTRUE(SimpleEffect())){
+        
+        if(IVNumber() == 2){
+          eval(parse(text = paste0('emmeans(M(), pairwise~',Predictor(),'|',Modulator1(),')$contr %>% as_tibble()')))
+        }else{
+          eval(parse(text = paste0('emmeans(M(), pairwise~',Predictor(),'|',Modulator1(),'|',Modulator2(),')$contr %>% as_tibble()')))
+        }
+        
+      }
+    })
+    
+    output$downloadComparison = downloadHandler(
+      
+      filename = function() {
+        paste(input$DV,'Comparison_Table', ".csv", sep = "")
+      },
+      content = function(file) {
+        if(isTRUE(SimpleEffect())){
+          
+          options(digits = 3)
+          if(IVNumber() == 2){
+            eval(parse(text = paste0('M1 = emmeans(M(), pairwise~',Predictor(),'|',Modulator1(),')$contr %>% as_tibble()')))
+          }else{
+            eval(parse(text = paste0('M1 = emmeans(M(), pairwise~',Predictor(),'|',Modulator1(),'|',Modulator2(),')$contr %>% as_tibble()')))
+          }
+          
+        }
+        write.csv(M1, file, row.names = FALSE)
+      }
+    )
+    
+    output$Plot = renderPlot({
+      if(isTRUE(PLOT())){
+        GreyBreaker = function(df,Modulator){
+          Number = eval(parse(text = paste0('length(unique(df$',Modulator,'))')))
+          Breaker = seq(from=40, to = 80,round((80-40)%/%(Number-1)))
+          return(paste(paste0('\'grey',Breaker,'\''), collapse = ','))
+        }
+        if(Geomtype() %in% 'violin plus raw data'){
+          
+          ViolinRawdata(df = df(),IVNumber = IVNumber(),DepenVar = DepenVar2(),
+                        Pred = Predictor(),Modu1 = Modulator1(),Modu2 = Modulator2(),
+                        Themes = Themes(), Color = Color(),
+                        Title = Title(), Xlab = Xlab(),Ylab = Ylab(), LegendM = LegendM(),LabelSize = LabelSize())
+        }else if(Geomtype() %in% 'violin plus boxplot'){
+          ViolinBox(df = df(),IVNumber = IVNumber(),DepenVar = DepenVar2(),
+                    Pred = Predictor(),Modu1 = Modulator1(),Modu2 = Modulator2(),
+                    Themes = Themes(), Color = Color(),
+                    Title = Title(), Xlab = Xlab(),Ylab = Ylab(), LegendM = LegendM(),LabelSize = LabelSize())
+        }else{
+          if(IVNumber() == 2){
+            eval(parse(text = paste0('interactions::cat_plot(model = M(), pred = ',Predictor(),', ',
+                                     'modx = ',Modulator1(),', ',
+                                     'geom = ','\'',Geomtype(),'\'',', ',
+                                     'errorbar.width = 0.2,',
+                                     'legend.main = \'',LegendM(),'\',',
+                                     ifelse(Geomtype() %in% 'bar','','dodge.width = 0.3,'),
+                                     'point.alpha = 0.1,',
+                                     ifelse(Color() %in% c('Set1','Set2','Set3'),
+                                            paste0('colors = \'', Color(),'\','),
+                                            paste0('colors = c(',GreyBreaker(df(),Modulator1()),'),')),
+                                     'plot.points = ',Dots(),', geom.alpha = 0.8)',
+                                     ifelse(Themes() %in% 'origin',
+                                            '',
+                                            ifelse(Themes() %in% 'APA',
+                                                   '+jtools::theme_apa()',
+                                                   ifelse(Themes() %in% 'Solar',
+                                                          '+ggthemes::theme_solarized()',
+                                                          ifelse(Themes() %in% 'Wall Street Journal',
+                                                                 '+ggthemes::theme_wsj()','')))),
+                                     '+labs(y = Ylab(), x = Xlab(), title = Title())',
+                                     ' + theme(plot.title = element_text(hjust = 0.5, size = ',LabelSize()+5,'),',
+                                     ' axis.title.x = element_text(size = ',LabelSize(),
+                                     '), axis.title.y = element_text(size = ',LabelSize(),
+                                     '), legend.text = element_text(size = ',LabelSize()-5,
+                                     '), legend.title = element_text(size = ',LabelSize(),
+                                     '), axis.text.y = element_text(size = ',LabelSize()-5,
+                                     '), axis.text.x = element_text(size = ',LabelSize()-5,'))')))
+          }else{
+            eval(parse(text = paste0('interactions::cat_plot(model = M(), pred = ',Predictor(),', ',
+                                     'modx = ',Modulator1(),', ',
+                                     'mod2 = ',Modulator2(),', ',
+                                     'geom = ','\'',Geomtype(),'\'',', ',
+                                     'errorbar.width = 0.2,',
+                                     'legend.main = \'',LegendM(),'\',',
+                                     ifelse(Geomtype() %in% 'bar','','dodge.width = 0.3,'),
+                                     'point.alpha = 0.1,',
+                                     ifelse(Color() %in% c('Set1','Set2','Set3'),
+                                            paste0('colors = \'', Color(),'\','),
+                                            paste0('colors = c(',GreyBreaker(df(),Modulator1()),'),')),
+                                     'plot.points = ',Dots(),', geom.alpha = 0.8)',
+                                     ifelse(Themes() %in% 'origin',
+                                            '',
+                                            ifelse(Themes() %in% 'APA',
+                                                   '+jtools::theme_apa()',
+                                                   ifelse(Themes() %in% 'Solar',
+                                                          '+ggthemes::theme_solarized()',
+                                                          '+ggthemes::theme_wsj()'))),
+                                     '+labs(y = Ylab(), x = Xlab(), title = Title())',
+                                     ' + theme(plot.title = element_text(hjust = 0.5, size = ',LabelSize()+5,'),',
+                                     ' axis.title.x = element_text(size = ',LabelSize(),
+                                     '), axis.title.y = element_text(size = ',LabelSize(),
+                                     '), legend.text = element_text(size = ',LabelSize()-5,
+                                     '), legend.title = element_text(size = ',LabelSize(),
+                                     '), axis.text.y = element_text(size = ',LabelSize()-5,
+                                     '), axis.text.x = element_text(size = ',LabelSize()-5,'))')))
+          }
+        }
+        
+        
+      }
+    },width = function() return(Width2()), height = function() return(Height2()))
+    
+    output$Sub.Plot = renderPlot({
+      if(isTRUE(Split.Sub())){
+        Density.Sub = function(df,Sub, DV, NumCol, transfer = 'Origin'){
+          eval(parse(text = paste0('df$',Sub,' = factor(df$',Sub,')')))
+          eval(parse(text = paste0('p = ggplot(data = df, aes(x = ',
+                                   switch(transfer,
+                                          'Origin' = DV,
+                                          'Log E' = paste0('log(',DV,')'),
+                                          'Log 10' = paste0('log10(',DV,')'),
+                                          'Minus Reverse' = paste0('-1/',DV),
+                                          'Minus Reverse Multi 1000' = paste0('-1000/',DV)),
+                                   ', fill = ',Sub,'))+geom_density()')))
+          eval(parse(text = paste0('p = p + facet_wrap(~',Sub,', ncol = ',NumCol,')')))
+          eval(parse(text = paste('p + labs(x = \'',Sub,'\',', y = '\'',DV,'\')')))
+        }
+        p = Density.Sub(df = df(),Sub = SubName(),DV = DepenVar(),NumCol = NumCol(),transfer = Transfer())
+        print(p)
+      }
+    },width = function() return(Width()),
+    height = function() return(Height()))
+    
   }
-
-  Model_RunOneCore = function(formula.id){
-
-    library(lmerTest)
-    if(is.null(Family)){
-      M = lmer(data = df, as.formula(Formulas[formula.id]))
-      MAIC = AIC(M)
-      MBIC = BIC(M)
-      MConverge = ifelse(length(M@optinfo$conv$lme4$messages[grep(pattern = 'Model failed to converge',
-                                                                  x = M@optinfo$conv$lme4$message)]) > 0,
-                         F,T)
-      M.Singular = isSingular(M)
-      try({
-        R2.C = MuMIn::r.squaredGLMM(M)[[2]]
-        R2.M = MuMIn::r.squaredGLMM(M)[[1]]
-      },silent = F)
-      resulttable = data.frame(formula = Formulas[formula.id],
-                               R2.M = ifelse(exists('R2.M'),R2.M,NA),
-                               R2.C = ifelse(exists('R2.C'),R2.C,NA),
-                               AIC = MAIC,
-                               BIC = MBIC,
-                               Converge = MConverge,
-                               Singular = M.Singular)
-      return(resulttable)
-    }else{
-      M = glmer(data = df, as.formula(Formulas[formula.id]), family = Family)
-      MAIC = AIC(M)
-      MBIC = BIC(M)
-      M.Singular = isSingular(M)
-      MConverge = ifelse(length(M@optinfo$conv$lme4$messages[grep(pattern = 'Model failed to converge',
-                                                                  x = M@optinfo$conv$lme4$message)]) > 0,
-                         F,T)
-      try({
-        R2.C = MuMIn::r.squaredGLMM(M)[[2]]
-        R2.M = MuMIn::r.squaredGLMM(M)[[1]]
-      },silent = F)
-      resulttable = data.frame(formula = Formulas[formula.id],
-                               R2.M = ifelse(exists('R2.M'),R2.M,NA),
-                               R2.C = ifelse(exists('R2.C'),R2.C,NA),
-                               AIC = MAIC,
-                               BIC = MBIC,
-                               Converge = MConverge,
-                               Singular = M.Singular)
-      return(resulttable)
-    }
-  }
-
-  if (isTRUE(Ifrun)) {
-    tic = Sys.time()
-    formula.ids = sample(1:length(Formulas), length(Formulas))
-    cat(length(Formulas), 'LMM models are running with', Ncore, ' parallel cores..............\n\n')
-    library(parallel)
-    cl <- makeCluster(Ncore)
-    clusterExport(cl, c('df','DV','IV','Cluster',
-                        'Ifrun','Manual','Manualcodefilename',
-                        'Family','Formulas'), envir = environment())
-    Results.DF <- do.call('rbind',parLapply(cl,formula.ids, Model_RunOneCore))
-    stopCluster(cl)
-    write_csv(Results.DF,paste0('ModelInfo',output,'.csv'))
-    print(Sys.time() - tic)
-    return(Results.DF)
-  }
+  
+  print(shinyApp(ui, server))
 }
 
 LMMRun_Parallel_shiny = function(){
@@ -1048,6 +1407,129 @@ Data_Filter_Shiny = function(){
   print(shinyApp(ui, server))
 }
 
+PowerTable = function(df,formula, family, fixedeffect, subject, minsub, maxsub, steps){
+  NumP = c(eval(parse(text = paste0('length(unique(df','$',subject,'))'))),
+           seq(from = minsub, to = maxsub, steps))
+  Number = numeric(length = length(NumP))
+  Power = numeric(length = length(NumP))
+  ConfUp = numeric(length = length(NumP))
+  ConfLow = numeric(length = length(NumP))
+
+  eval(parse(text = paste0('M = ',ifelse(family == 'gaussian','lmer(','glmer('),
+                           'data = df', ',',
+                           formula,
+                           ifelse(family == 'gaussian',')',
+                                  paste0(', family = \'',family,'\')')))))
+  eval(parse(text = paste0('PA = powerSim(M, fixed(\'',fixedeffect,'\'), nsim = 100, alpha = 0.05)')))
+  Number[1] = NumP[1]
+  Power[1] = PA$x
+  ConfLow[1] = binom.test(x = sum(PA$pval<0.05),n = length(PA$pval),p = 0.5)$conf.int[1]
+  ConfUp[1] = binom.test(x = sum(PA$pval<0.05),n = length(PA$pval),p = 0.5)$conf.int[2]
+
+  for(ss in 2:length(NumP)){
+    eval(parse(text = paste0('M2 = extend(M, along = \'',subject,'\',n = ',NumP[ss],')')))
+    eval(parse(text = paste0('PA = powerSim(M2, fixed(\'',fixedeffect,'\'), nsim = 100, alpha = 0.05)')))
+    Number[ss] = NumP[ss]
+    Power[ss] = PA$x
+    ConfLow[ss] = binom.test(x = sum(PA$pval<0.05),n = length(PA$pval),p = 0.5)$conf.int[1]
+    ConfUp[ss] = binom.test(x = sum(PA$pval<0.05),n = length(PA$pval),p = 0.5)$conf.int[2]
+  }
+
+  return(tibble(SubNumber = Number,
+                PowerValue = Power,
+                ConfUp,ConfLow))
+}
+
+
+Power_Shiny = function(){
+  ui <- fluidPage(
+    titlePanel('SHINY Power calculation of linear mixed model'),
+    sidebarLayout(
+
+      sidebarPanel(
+        actionButton(inputId = 'Run',label = 'Run'),
+
+        textInput('Formula','Input the formula:',NULL),
+
+        selectInput('Family', 'Select the distribution family of dependent variable:',
+                    choices = c('gaussian','binomial','poisson')),
+
+        textInput('FixedEffect','Input the fixed effect to examine:',NULL),
+
+        textInput('Subject','Input the name of variable indicating subject:',NULL),
+
+        numericInput('MinSub','Input the minimum number of participants to check:',20),
+        numericInput('MaxSub','Input the minimum number of participants to check:',80),
+
+        sliderInput('Step','Set the step to increase:',min = 1, max = 20,step = 1,value = 10),
+
+        fileInput("file1", "Choose CSV File of your data",
+                  accept = c(
+                    "text/csv",
+                    "text/comma-separated-values,text/plain",
+                    ".csv")
+        ),
+        numericInput("obs", "Set the number of observations to view:", 6)
+      ),
+      mainPanel(
+        tabsetPanel(type = 'tabs',
+                    tabPanel('Data Summary',tableOutput("DataSummary"))),
+
+        tabsetPanel(type = 'tabs',
+                    tabPanel('Power table',tableOutput("Power"))),
+
+        tabsetPanel(type = 'tabs',
+                    tabPanel('Plot', plotOutput('Plot')))
+
+      )
+    )
+  )
+
+  server <- function(input, output) {
+
+    Formula = reactive(input$Formula)
+    Family = reactive(input$Family)
+    FixedEffect = reactive(input$FixedEffect)
+    Subject = reactive(input$Subject)
+    MinSub = reactive(input$MinSub)
+    MaxSub = reactive(input$MaxSub)
+    Step = reactive(input$Step)
+    obs = reactive(input$obs)
+
+    df = reactive({
+      inFile <- input$file1
+
+      if (is.null(inFile))
+        return(NULL)
+
+      read.csv(inFile$datapath, header = T)
+    })
+    output$DataSummary = renderTable({
+      head(df(),n = obs())
+    })
+
+    Table = eventReactive(input$Run,{
+      PowerTable(formula = Formula(),family = Family(),
+                 fixedeffect = FixedEffect(),subject = Subject(),
+                 minsub = MinSub(),maxsub = MaxSub(),steps = Step(),df = df())
+    },ignoreNULL = F)
+
+    output$Power = renderTable({
+      Table()
+    })
+
+    output$Plot = renderPlot({
+      ggplot(data = Table(), aes(x = SubNumber, y = PowerValue))+
+        geom_line()+geom_point(size=2)+
+        geom_errorbar(aes(x = SubNumber, ymax = ConfUp*100, ymin = ConfLow*100), width = 0.1)+
+        geom_hline(aes(yintercept = 80), linetype = 'dashed')
+
+    })
+  }
+
+  print(shinyApp(ui, server))
+}
+
 cat('\nThanks for using the Shiny user interface For Linear Mixed Model!\n\n')
 cat('Now there are several functions in your environment.\n
     You can simply run some of them to satisfy some of your need.\n\n')
@@ -1059,8 +1541,11 @@ cat('########################\n3.You can run this command to build a model and g
     LMM_Model_Info_Shiny()\n\n')
 cat('########################\n4.You can run this command to filter data:\n
     Data_Filter_Shiny()\n\n########################\n\n')
+cat('########################\n5.You can run this command to calculate power and predict the size of subjects:\n
+    Power_Shiny()\n\n########################\n\n')
 cat('For more details and usages, please refer to the links below:\n
     https://zhuanlan.zhihu.com/p/67680257\n
     https://zhuanlan.zhihu.com/p/67048151\n
-    https://zhuanlan.zhihu.com/p/63092231\n')
+    https://zhuanlan.zhihu.com/p/63092231\n
+    https://zhuanlan.zhihu.com/p/68469202\n')
 cat('\n########################\nPlease note that there will be continuous updates, so be sure to look out for it')
