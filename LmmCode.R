@@ -1063,9 +1063,10 @@ PowerTable = function(df,formula, family, fixedeffect, subject, minsub, maxsub, 
   clusterEvalQ(cl,c('simr','tidyverse'))
   Results.DF <- do.call('rbind',parLapply(cl,SS, PowerOne))
   stopCluster(cl)
-
+  
   DF = bind_rows(FirstOne, Results.DF) %>% arrange(SubNumber)
-  print(Sys.time()-tic)
+  a = Sys.time()-tic
+  cat('Power running has taken',a[[1]],attributes(a)$unit,'\n\n')
   return(DF)
 }
 Power_Shiny = function(){
