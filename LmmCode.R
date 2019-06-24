@@ -1063,7 +1063,7 @@ PowerTable = function(df,formula, family, fixedeffect, subject, minsub, maxsub, 
   clusterEvalQ(cl,c('simr','tidyverse'))
   Results.DF <- do.call('rbind',parLapply(cl,SS, PowerOne))
   stopCluster(cl)
-  
+
   DF = bind_rows(FirstOne, Results.DF) %>% arrange(SubNumber)
   a = Sys.time()-tic
   cat('Power running has taken',a[[1]],attributes(a)$unit,'\n\n')
@@ -1099,7 +1099,8 @@ Power_Shiny = function(){
                     "text/comma-separated-values,text/plain",
                     ".csv")
         ),
-        numericInput("obs", "Set the number of observations to view:", 6)
+        numericInput("obs", "Set the number of observations to view:", 6),
+        downloadButton("downloadData", "Download the formulas")
       ),
       mainPanel(
         tabsetPanel(type = 'tabs',
@@ -1156,6 +1157,15 @@ Power_Shiny = function(){
         geom_hline(aes(yintercept = 80), linetype = 'dashed')
 
     })
+
+    output$downloadData <- downloadHandler(
+      filename = function() {
+        paste('Power', ".csv", sep = "")
+      },
+      content = function(file) {
+        write.csv(Table(), file, row.names = FALSE)
+      }
+    )
   }
 
   print(shinyApp(ui, server))
