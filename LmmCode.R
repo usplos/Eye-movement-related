@@ -540,7 +540,9 @@ LMM_Model_Info_Shiny = function(){
         sliderInput(inputId = 'LabelSize',label = 'Set the size of plot labels and title',min = 10, max = 50,step = 1, value = 10),
         checkboxInput('Dots','Whether draw raw data (dots)?',F),
         numericInput(inputId = 'Width2',label = 'Set the plot Width',value = 400, min = 400, max = 10000,step = 1),
-        numericInput(inputId = 'Height2',label = 'Set the plot Height',value = 400, min = 400, max = 10000,step = 1)
+        numericInput(inputId = 'Height2',label = 'Set the plot Height',value = 400, min = 400, max = 10000,step = 1),
+        
+        helpText('Thanks help from Wey Xiaoyu. Would you marry me?')
       ),
       mainPanel(
         tabsetPanel(type = 'tabs',
@@ -1024,7 +1026,8 @@ Data_Filter_Shiny = function(){
 }
 
 ####################
-PowerTable = function(df,formula, family, fixedeffect, subject, minsub, maxsub, steps, Ncore = 4){
+PowerTable = function(df,formula, family, fixedeffect, subject, minsub, maxsub, steps, Ncore = 4, Nsim=100){
+  tic = Sys.time()
   NumP = c(eval(parse(text = paste0('length(unique(df','$',subject,'))'))),
            seq(from = minsub, to = maxsub, steps))
   eval(parse(text = paste0('M = ',ifelse(family == 'gaussian','lmer(','glmer('),
@@ -1032,9 +1035,9 @@ PowerTable = function(df,formula, family, fixedeffect, subject, minsub, maxsub, 
                            formula,
                            ifelse(family == 'gaussian',')',
                                   paste0(', family = \'',family,'\')')))))
-  eval(parse(text = paste0('PA = powerSim(M, fixed(\'',fixedeffect,'\'), nsim = 100, alpha = 0.05)')))
+  eval(parse(text = paste0('PA = powerSim(M, fixed(\'',fixedeffect,'\'), nsim = ',Nsim,', alpha = 0.05)')))
   Number = NumP[1]
-  Power = PA$x
+  Power = mean(PA$pval<0.05)*100
   ConfLow = binom.test(x = sum(PA$pval<0.05),n = length(PA$pval),p = 0.5)$conf.int[1]*100
   ConfUp = binom.test(x = sum(PA$pval<0.05),n = length(PA$pval),p = 0.5)$conf.int[2]*100
   FirstOne = data.frame(SubNumber = Number,
@@ -1044,22 +1047,23 @@ PowerTable = function(df,formula, family, fixedeffect, subject, minsub, maxsub, 
   PowerOne = function(ss){
     library(simr)
     eval(parse(text = paste0('M2 = extend(M, along = \'',subject,'\',n = ',NumP[ss],')')))
-    eval(parse(text = paste0('PA = powerSim(M2, fixed(\'',fixedeffect,'\'), nsim = 100, alpha = 0.05)')))
+    eval(parse(text = paste0('PA = powerSim(M2, fixed(\'',fixedeffect,'\'), nsim = ',Nsim,', alpha = 0.05)')))
     Number = NumP[ss]
-    Power = PA$x
+    Power = mean(PA$pval<0.05)*100
     ConfLow = binom.test(x = sum(PA$pval<0.05),n = length(PA$pval),p = 0.5)$conf.int[1]*100
     ConfUp = binom.test(x = sum(PA$pval<0.05),n = length(PA$pval),p = 0.5)$conf.int[2]*100
+    print(paste('Sample size with ', NumP[ss], ' has been done!'))
     return(data.frame(SubNumber = Number,
                       PowerValue = Power,
                       ConfUp,ConfLow))
   }
 
-  tic = Sys.time()
+  
   SS = sample(2:length(NumP),length(NumP)-1)
   cat(length(NumP)-1, 'Power calculating are running with', Ncore, ' parallel cores..............\n\n')
   library(parallel)
   cl <- makeCluster(Ncore)
-  clusterExport(cl, c('subject','NumP','fixedeffect','M','df','formula'), envir = environment())
+  clusterExport(cl, c('subject','NumP','fixedeffect','M','df','formula','Nsim'), envir = environment())
   clusterEvalQ(cl,c('simr','tidyverse'))
   Results.DF <- do.call('rbind',parLapply(cl,SS, PowerOne))
   stopCluster(cl)
@@ -1075,7 +1079,7 @@ Power_Shiny = function(){
     sidebarLayout(
 
       sidebarPanel(
-        actionButton(inputId = 'Run',label = 'Run'),
+        actionButton(inputId = 'Run',label = 'Run Power Calculation !!'),
 
         textInput('Formula','Input the formula:',NULL),
 
@@ -1090,6 +1094,8 @@ Power_Shiny = function(){
         numericInput('MaxSub','Input the minimum number of participants to check:',80),
 
         sliderInput('Step','Set the step to increase:',min = 1, max = 20,step = 1,value = 10),
+        
+        numericInput('Nsim','Input the number of simulation:',100),
 
         sliderInput('Ncore','Set the paralle cores to run',min = 1, max = 20, step = 1, value = 4),
 
@@ -1126,6 +1132,7 @@ Power_Shiny = function(){
     MaxSub = reactive(input$MaxSub)
     Step = reactive(input$Step)
     Ncore = reactive(input$Ncore)
+    Nsim = reactive(input$Nsim)
     obs = reactive(input$obs)
 
     df = reactive({
@@ -1143,7 +1150,8 @@ Power_Shiny = function(){
     Table = eventReactive(input$Run,{
       PowerTable(formula = Formula(),family = Family(),
                  fixedeffect = FixedEffect(),subject = Subject(),
-                 minsub = MinSub(),maxsub = MaxSub(),steps = Step(),df = df(),Ncore = Ncore())
+                 minsub = MinSub(),maxsub = MaxSub(),steps = Step(),df = df(),
+                 Ncore = Ncore(),Nsim = Nsim())
     },ignoreNULL = F)
 
     output$Power = renderTable({
@@ -1154,7 +1162,9 @@ Power_Shiny = function(){
       ggplot(data = Table(), aes(x = SubNumber, y = PowerValue))+
         geom_line()+geom_point(size=2)+
         geom_errorbar(aes(x = SubNumber, ymax = ConfUp, ymin = ConfLow), width = 0.1)+
-        geom_hline(aes(yintercept = 80), linetype = 'dashed')
+        geom_hline(aes(yintercept = 80), linetype = 'dashed')+
+        theme(axis.title = element_text(size = 20),
+              axis.text = element_text(size = 15))
 
     })
 
