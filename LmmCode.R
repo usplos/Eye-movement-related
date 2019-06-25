@@ -374,8 +374,10 @@ LMMRun_Parallel_shiny = function(){
     })
     
     output$End = eventReactive(input$update,{
+      if(Output() %in% c('Marry','Thank', 'Wey')){
       'Thank help from Wey. Would you marry me?'
-    })
+      }else{'   '}
+    },ignoreNULL = F)
   }
 
   print(shinyApp(ui, server))
@@ -836,7 +838,7 @@ LMM_Model_Info_Shiny = function(){
     
     output$Information = reactive({
       if(Formula() %in% c('Builder','Author','Inventor','Information')){
-        'All the shiny interfaces are built by Zhang Guangyao alone.'
+        'All the shiny interfaces are built by Zhangguangyao alone.'
       }else{
         'This is the end.'
       }
