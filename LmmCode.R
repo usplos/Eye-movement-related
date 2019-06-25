@@ -557,7 +557,8 @@ LMM_Model_Info_Shiny = function(){
         tabsetPanel(type = 'tabs',
                     tabPanel('Simple Effect',tableOutput('Emmeans'),tableOutput('Comparison'))),
         tabsetPanel(type = 'tabs',
-                    tabPanel('Plot', plotOutput('Plot',inline = T)))
+                    tabPanel('Plot', plotOutput('Plot',inline = T))),
+        textOutput('Information')
 
       )
     )
@@ -832,6 +833,15 @@ LMM_Model_Info_Shiny = function(){
       }
     },width = function() return(Width()),
     height = function() return(Height()))
+    
+    output$Information = reactive({
+      if(Formula() %in% c('Builder','Author','Inventor','Information')){
+        'All the shiny interfaces are built by Zhang Guangyao alone.'
+      }else{
+        'This is the end.'
+      }
+      
+    })
 
   }
 
