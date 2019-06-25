@@ -297,7 +297,8 @@ LMMRun_Parallel_shiny = function(){
 
       ),
       mainPanel(
-        tableOutput("contents")
+        tableOutput("contents"),
+        textOutput(outputId = 'End')
       )
     )
   )
@@ -351,27 +352,29 @@ LMMRun_Parallel_shiny = function(){
       d = read.csv(inFile$datapath, header = T)
 
 
-      anovatable = eventReactive(input$update, {
-        if(IVNumber() == 2){
-          LMMRun_Parallel(df = d,
-                          DV = DV(),
-                          IV = c(IV1(), IV2()),
-                          Cluster = c(Cluster1(), Cluster2()),
-                          Manual = Manual(),Manualcodefilename = m, Family = FamilyD(),
-                          Ifrun = Ifrun(),
-                          Ncore = input$Ncore,
-                          output = Output()) %>% arrange(Singular,-Converge,BIC)
-        }else{
-          LMMRun_Parallel(df = d,
-                          DV = DV(),
-                          IV = c(IV1(), IV2(),IV3()),
-                          Cluster = c(Cluster1(), Cluster2()),
-                          Manual = Manual(),Manualcodefilename = m, Family = FamilyD(),
-                          Ifrun = Ifrun(),
-                          Ncore = input$Ncore,
-                          output = Output()) %>% arrange(Singular,-Converge,BIC)
-        }}, ignoreNULL = FALSE)
-      anovatable()
+      if(IVNumber() == 2){
+        LMMRun_Parallel(df = d,
+                        DV = DV(),
+                        IV = c(IV1(), IV2()),
+                        Cluster = c(Cluster1(), Cluster2()),
+                        Manual = Manual(),Manualcodefilename = m, Family = FamilyD(),
+                        Ifrun = Ifrun(),
+                        Ncore = input$Ncore,
+                        output = Output()) %>% arrange(Singular,-Converge,BIC)
+      }else{
+        LMMRun_Parallel(df = d,
+                        DV = DV(),
+                        IV = c(IV1(), IV2(),IV3()),
+                        Cluster = c(Cluster1(), Cluster2()),
+                        Manual = Manual(),Manualcodefilename = m, Family = FamilyD(),
+                        Ifrun = Ifrun(),
+                        Ncore = input$Ncore,
+                        output = Output()) %>% arrange(Singular,-Converge,BIC)
+      }
+    })
+    
+    output$End = eventReactive(input$update,{
+      'Thank help from Wey. Would you marry me?'
     })
   }
 
@@ -540,9 +543,8 @@ LMM_Model_Info_Shiny = function(){
         sliderInput(inputId = 'LabelSize',label = 'Set the size of plot labels and title',min = 10, max = 50,step = 1, value = 10),
         checkboxInput('Dots','Whether draw raw data (dots)?',F),
         numericInput(inputId = 'Width2',label = 'Set the plot Width',value = 400, min = 400, max = 10000,step = 1),
-        numericInput(inputId = 'Height2',label = 'Set the plot Height',value = 400, min = 400, max = 10000,step = 1),
+        numericInput(inputId = 'Height2',label = 'Set the plot Height',value = 400, min = 400, max = 10000,step = 1)
         
-        helpText('Thanks help from Wey Xiaoyu. Would you marry me?')
       ),
       mainPanel(
         tabsetPanel(type = 'tabs',
