@@ -372,10 +372,10 @@ LMMRun_Parallel_shiny = function(){
                         output = Output()) %>% arrange(Singular,-Converge,BIC)
       }
     })
-    
+
     output$End = eventReactive(input$update,{
       if(Output() %in% c('Marry','Thank', 'Wey')){
-      'Thank help from Wey. Would you marry me?'
+        'Thank help from Wey. Would you marry me?'
       }else{'   '}
     },ignoreNULL = F)
   }
@@ -546,7 +546,7 @@ LMM_Model_Info_Shiny = function(){
         checkboxInput('Dots','Whether draw raw data (dots)?',F),
         numericInput(inputId = 'Width2',label = 'Set the plot Width',value = 400, min = 400, max = 10000,step = 1),
         numericInput(inputId = 'Height2',label = 'Set the plot Height',value = 400, min = 400, max = 10000,step = 1)
-        
+
       ),
       mainPanel(
         tabsetPanel(type = 'tabs',
@@ -835,14 +835,14 @@ LMM_Model_Info_Shiny = function(){
       }
     },width = function() return(Width()),
     height = function() return(Height()))
-    
+
     output$Information = reactive({
       if(Formula() %in% c('Builder','Author','Inventor','Information')){
         'All the shiny interfaces are built by Zhangguangyao alone.'
       }else{
         'This is the end.'
       }
-      
+
     })
 
   }
@@ -1040,7 +1040,7 @@ Data_Filter_Shiny = function(){
 }
 
 ####################
-PowerTable = function(df,formula, family, fixedeffect, subject, minsub, maxsub, steps, Ncore = 4, Nsim=100){
+PowerTable = function(df,formula, family, fixedeffect, subject, minsub, maxsub, steps, Ncore = 4, Nsim=100, RunOrigin = T){
   tic = Sys.time()
   NumP = c(eval(parse(text = paste0('length(unique(df','$',subject,'))'))),
            seq(from = minsub, to = maxsub, steps))
@@ -1049,14 +1049,16 @@ PowerTable = function(df,formula, family, fixedeffect, subject, minsub, maxsub, 
                            formula,
                            ifelse(family == 'gaussian',')',
                                   paste0(', family = \'',family,'\')')))))
-  eval(parse(text = paste0('PA = powerSim(M, fixed(\'',fixedeffect,'\'), nsim = ',Nsim,', alpha = 0.05)')))
-  Number = NumP[1]
-  Power = mean(PA$pval<0.05)*100
-  ConfLow = binom.test(x = sum(PA$pval<0.05),n = length(PA$pval),p = 0.5)$conf.int[1]*100
-  ConfUp = binom.test(x = sum(PA$pval<0.05),n = length(PA$pval),p = 0.5)$conf.int[2]*100
-  FirstOne = data.frame(SubNumber = Number,
-                        PowerValue = Power,
-                        ConfUp,ConfLow)
+  if(isTRUE(RunOrigin)){
+    eval(parse(text = paste0('PA = powerSim(M, fixed(\'',fixedeffect,'\'), nsim = ',Nsim,', alpha = 0.05)')))
+    Number = NumP[1]
+    Power = mean(PA$pval<0.05)*100
+    ConfLow = binom.test(x = sum(PA$pval<0.05),n = length(PA$pval),p = 0.5)$conf.int[1]*100
+    ConfUp = binom.test(x = sum(PA$pval<0.05),n = length(PA$pval),p = 0.5)$conf.int[2]*100
+    FirstOne = data.frame(SubNumber = Number,
+                          PowerValue = Power,
+                          ConfUp,ConfLow)
+  }
 
   PowerOne = function(ss){
     library(simr)
@@ -1072,17 +1074,21 @@ PowerTable = function(df,formula, family, fixedeffect, subject, minsub, maxsub, 
                       ConfUp,ConfLow))
   }
 
-  
+
   SS = sample(2:length(NumP),length(NumP)-1)
   cat(length(NumP)-1, 'Power calculating are running with', Ncore, ' parallel cores..............\n\n')
   library(parallel)
   cl <- makeCluster(Ncore)
   clusterExport(cl, c('subject','NumP','fixedeffect','M','df','formula','Nsim'), envir = environment())
   clusterEvalQ(cl,c('simr','tidyverse'))
-  Results.DF <- do.call('rbind',parLapply(cl,SS, PowerOne))
+  DF <- do.call('rbind',parLapply(cl,SS, PowerOne))
   stopCluster(cl)
 
-  DF = bind_rows(FirstOne, Results.DF) %>% arrange(SubNumber)
+  if(isTRUE(RunOrigin)){
+    DF = bind_rows(FirstOne, DF)
+  }
+
+  DF = DF %>% arrange(SubNumber)
   a = Sys.time()-tic
   cat('Power running has taken',a[[1]],attributes(a)$unit,'\n\n')
   return(DF)
@@ -1094,8 +1100,11 @@ Power_Shiny = function(){
 
       sidebarPanel(
         actionButton(inputId = 'Run',label = 'Run Power Calculation !!'),
+        actionButton(inputId = 'Clear',label = 'Clear all variables in working space.'),
 
         textInput('Formula','Input the formula:',NULL),
+
+        checkboxInput(inputId = 'RunOrigin',label = 'Whether run the origin model?',value = T),
 
         selectInput('Family', 'Select the distribution family of dependent variable:',
                     choices = c('gaussian','binomial','poisson')),
@@ -1108,7 +1117,7 @@ Power_Shiny = function(){
         numericInput('MaxSub','Input the minimum number of participants to check:',80),
 
         sliderInput('Step','Set the step to increase:',min = 1, max = 20,step = 1,value = 10),
-        
+
         numericInput('Nsim','Input the number of simulation:',100),
 
         sliderInput('Ncore','Set the paralle cores to run',min = 1, max = 20, step = 1, value = 4),
@@ -1139,6 +1148,7 @@ Power_Shiny = function(){
   server <- function(input, output) {
 
     Formula = reactive(input$Formula)
+    RunOrigin = reactive(input$RunOrigin)
     Family = reactive(input$Family)
     FixedEffect = reactive(input$FixedEffect)
     Subject = reactive(input$Subject)
@@ -1165,7 +1175,7 @@ Power_Shiny = function(){
       PowerTable(formula = Formula(),family = Family(),
                  fixedeffect = FixedEffect(),subject = Subject(),
                  minsub = MinSub(),maxsub = MaxSub(),steps = Step(),df = df(),
-                 Ncore = Ncore(),Nsim = Nsim())
+                 Ncore = Ncore(),Nsim = Nsim(),RunOrigin = RunOrigin())
     },ignoreNULL = F)
 
     output$Power = renderTable({
@@ -1180,6 +1190,10 @@ Power_Shiny = function(){
         theme(axis.title = element_text(size = 20),
               axis.text = element_text(size = 15))
 
+    })
+
+    eventReactive(input$Clear,{
+      rm(list = ls())
     })
 
     output$downloadData <- downloadHandler(
