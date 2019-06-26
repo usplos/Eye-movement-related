@@ -838,7 +838,7 @@ LMM_Model_Info_Shiny = function(){
 
     output$Information = reactive({
       if(Formula() %in% c('Builder','Author','Inventor','Information')){
-        'All the shiny interfaces are built by Zhangguangyao alone.'
+        'All the shiny interfaces are built by Zhangguangyao on his own.'
       }else{
         'This is the end.'
       }
