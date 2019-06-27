@@ -1129,7 +1129,7 @@ Power_Shiny = function(){
                     ".csv")
         ),
         numericInput("obs", "Set the number of observations to view:", 6),
-        downloadButton("downloadData", "Download the formulas")
+        downloadButton("downloadData", "Download the power table")
       ),
       mainPanel(
         tabsetPanel(type = 'tabs',
