@@ -9,6 +9,7 @@ if(!require(jtools)){install.packages('jtools')}
 if(!require(ggthemes)){install.packages('ggthemes')}
 if(!require(simr)){install.packages('simr')}
 if(!require(ggbeeswarm)){install.packages('ggbeeswarm')}
+if(!require(rio)){install.packages('rio')}
 
 ####################
 formula_generate = function(DV, IV, Cluster){
@@ -166,9 +167,9 @@ formula_generate_shiny = function(){
         paste(input$DV,'Formulas', ".csv", sep = "")
       },
       content = function(file) {
-        write.csv(formula_generate(DV = DV(),
+        rio::export(formula_generate(DV = DV(),
                                    IV = c(IV1(), IV2()),
-                                   Cluster = c(Cluster1(), Cluster2())) %>% as_tibble(), file, row.names = FALSE)
+                                   Cluster = c(Cluster1(), Cluster2())) %>% as_tibble(), file)
       }
     )
 
@@ -286,11 +287,11 @@ LMMRun_Parallel_shiny = function(){
 
         textInput('Output', 'input the prefix name of ouput file:','Y'),
 
-        fileInput("file1", "Choose CSV File of your data",
+        fileInput("file1", "Choose the File of your data",
                   accept = c(
                     "text/csv",
                     "text/comma-separated-values,text/plain",
-                    ".csv")
+                    ".csv",'.xls','.txt','.xlsx')
         ),
 
         actionButton("update", "Update View")
@@ -349,7 +350,7 @@ LMMRun_Parallel_shiny = function(){
       if (is.null(inFile))
         return(NULL)
 
-      d = read.csv(inFile$datapath, header = T)
+      d = rio::import(inFile$datapath)
 
 
       if(IVNumber() == 2){
@@ -508,11 +509,11 @@ LMM_Model_Info_Shiny = function(){
         selectInput('Contrasts','Select the type of contrasts:',
                     choices = c('sum','treatment')),
 
-        fileInput("file1", "Choose CSV File of your data",
+        fileInput("file1", "Choose the File of your data",
                   accept = c(
                     "text/csv",
                     "text/comma-separated-values,text/plain",
-                    ".csv")
+                    ".csv",'.xls','.txt','.xlsx')
         ),
         numericInput("obs", "Set the number of observations to view:", 6),
 
@@ -668,7 +669,7 @@ LMM_Model_Info_Shiny = function(){
         M1 = round(summary(M())$coef,digits = 3)
         M1 = bind_cols(tibble(Effect = rownames(M1)),
                        as_tibble(M1))
-        write.csv(M1, file, row.names = FALSE)
+        rio::export(M1, file)
       }
     )
     output$Anova = renderTable({
@@ -688,7 +689,7 @@ LMM_Model_Info_Shiny = function(){
         M1 = round(anova(M()),digits = 3)
         M1 = bind_cols(tibble(Effect = rownames(M1)),
                        as_tibble(M1))
-        write.csv(M1, file, row.names = FALSE)
+        rio::export(M1, file)
       }
     )
 
@@ -720,7 +721,7 @@ LMM_Model_Info_Shiny = function(){
           }
 
         }
-        write.csv(M1, file, row.names = FALSE)
+        rio::export(M1, file)
       }
     )
 
@@ -752,7 +753,7 @@ LMM_Model_Info_Shiny = function(){
           }
 
         }
-        write.csv(M1, file, row.names = FALSE)
+        rio::export(M1, file)
       }
     )
 
@@ -942,11 +943,11 @@ Data_Filter_Shiny = function(){
     sidebarLayout(
 
       sidebarPanel(
-        fileInput("file1", "Choose CSV File of your data",
+        fileInput("file1", "Choose the File of your data",
                   accept = c(
                     "text/csv",
                     "text/comma-separated-values,text/plain",
-                    ".csv")
+                    ".csv",'.xls','.txt','.xlsx')
         ),
 
         textInput('DV','Input the dependent variable:',NULL),
@@ -1003,7 +1004,7 @@ Data_Filter_Shiny = function(){
       if (is.null(inFile))
         return(NULL)
 
-      d = read.csv(inFile$datapath, header = T)
+      d = rio::import(inFile$datapath)
       head(d,n = obs())
     })
 
@@ -1013,7 +1014,7 @@ Data_Filter_Shiny = function(){
       if (is.null(inFile))
         return(NULL)
 
-      d = read.csv(inFile$datapath, header = T)
+      d = rio::import(inFile$datapath)
       print(paste0('There are ', nrow(d),' lines.'))
     })
 
@@ -1023,7 +1024,7 @@ Data_Filter_Shiny = function(){
       if (is.null(inFile))
         return(NULL)
 
-      d = read.csv(inFile$datapath, header = T)
+      d = rio::import(inFile$datapath)
       df = Datafilter(NGroup = NumGroup(), df = d,FilterO = Filter0(),
                       DV = DV(),Group1 = G1(),Group2 = G2(),Group3 = G3(),Group4 = G4(),Group5 = G5(),
                       ZV = ZV())
@@ -1036,7 +1037,7 @@ Data_Filter_Shiny = function(){
       if (is.null(inFile))
         return(NULL)
 
-      d = read.csv(inFile$datapath, header = T)
+      d = rio::import(inFile$datapath)
       df = Datafilter(NGroup = NumGroup(), df = d,FilterO = Filter0(),
                       DV = DV(),Group1 = G1(),Group2 = G2(),Group3 = G3(),Group4 = G4(),Group5 = G5(),
                       ZV = ZV())
@@ -1053,11 +1054,11 @@ Data_Filter_Shiny = function(){
         if (is.null(inFile))
           return(NULL)
 
-        d = read.csv(inFile$datapath, header = T)
+        d = rio::import(inFile$datapath)
         df = Datafilter(NGroup = NumGroup(), df = d,FilterO = Filter0(),
                         DV = DV(),Group1 = G1(),Group2 = G2(),Group3 = G3(),Group4 = G4(),Group5 = G5(),
                         ZV = ZV())
-        write.csv(df, file, row.names = FALSE)
+        rio::export(df, file)
       }
     )
 
@@ -1150,11 +1151,11 @@ Power_Shiny = function(){
 
         sliderInput('Ncore','Set the paralle cores to run',min = 1, max = 20, step = 1, value = 4),
 
-        fileInput("file1", "Choose the CSV File of your data",
+        fileInput("file1", "Choose the File of your data",
                   accept = c(
                     "text/csv",
                     "text/comma-separated-values,text/plain",
-                    ".csv")
+                    ".csv",'.xls','.txt','.xlsx')
         ),
         numericInput("obs", "Set the number of observations to view:", 6),
         downloadButton("downloadData", "Download the power table")
@@ -1229,7 +1230,7 @@ Power_Shiny = function(){
         paste('Power', ".csv", sep = "")
       },
       content = function(file) {
-        write.csv(Table(), file, row.names = FALSE)
+        rio::export(Table(), file)
       }
     )
   }
