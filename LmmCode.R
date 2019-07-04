@@ -1194,7 +1194,7 @@ Power_Shiny = function(){
       if (is.null(inFile))
         return(NULL)
 
-      read.csv(inFile$datapath, header = T)
+      import(inFile$datapath)
     })
     output$DataSummary = renderTable({
       head(df(),n = obs())
