@@ -1238,6 +1238,199 @@ Power_Shiny = function(){
   print(shinyApp(ui, server))
 }
 
+SV = function(Data,Sub, IV, DV, bootstrapNumber = 1000, perbinMax = 300, perbinMin = 0, baseline,
+              Ylab = 'DV', Xlab = 'IV', LegendM, WordSize)
+{
+  ############ calculate
+  DataRaw = Data
+  CondUnique = unique(DataRaw[[IV]])
+
+  for(i in CondUnique){
+    eval(parse(text = paste('perbin',i,' = matrix(0,nrow = bootstrapNumber, ncol = perbinMax-perbinMin+1)', sep = '')))
+  }
+
+  for(condition in CondUnique){
+    CondTemp = matrix(0, nrow = bootstrapNumber, ncol = perbinMax - perbinMin+1)
+    eval(parse(text = paste0('DataRawSS = filter(DataRaw ,',IV,' %in% condition)')))
+    eval(parse(text = paste0('SubjectUnique = unique(DataRawSS$',Sub,')')))
+    for(subject in SubjectUnique)
+    {
+      eval(parse(text = paste0('DataRawS = DataRawSS %>% filter(',Sub,' %in% subject)')))
+      SubCondTemp = matrix(0, nrow = bootstrapNumber, ncol = perbinMax - perbinMin+1)
+      for (i in 1:bootstrapNumber)
+      {
+        eval(parse(text = paste0('SubCondTempOnce = sort(sample(DataRawS$',DV,', size = nrow(DataRawS), replace = T))')))
+        SubCondTempOnceProp = numeric()
+        for(n in perbinMin:perbinMax)
+        {
+          checkn=which(perbinMin:perbinMax %in% n)
+          SubCondTempOnceProp[checkn] = mean(SubCondTempOnce > n)
+
+        }
+        SubCondTemp[i,] = SubCondTempOnceProp
+      }
+      CondTemp = SubCondTemp+ CondTemp;
+      cat(subject,' is done\n')
+    }
+    eval(parse(text = paste('perbin',condition,' = CondTemp/length(SubjectUnique)', sep = '')))
+    remove(CondTemp)
+    cat(condition, ' is done\n###############################################################\n')
+  }
+
+  CondCompare = eval(parse(text = paste('perbin',CondUnique[-1 * which(CondUnique %in% baseline)],' - ', 'perbin',baseline, sep = '')))
+  Differ = numeric(perbinMax - perbinMin +1)
+  for(i in 1:(perbinMax - perbinMin +1)){
+    Differ[i] = mean(CondCompare[,i]>0)
+  }
+  check = 0;TimePoint = NA;
+  for (i in 1:(perbinMax - perbinMin +1-4)) {
+    if(mean(Differ[i:(i+4)] > 0.95) == 1)
+    {
+      TimePoint = i;
+      check = 1;break
+    }
+  }
+  Result = list()
+  Result[[1]] = check
+  if(check == 1){
+    #Result[[1]] = paste0('The first time point is ',TimePoint,' ms.')
+    eval(parse(text = paste('perbinA',CondUnique[-1 * which(CondUnique %in% baseline)],' = numeric()', sep = '')))
+    eval(parse(text = paste('perbinA',baseline,' = numeric()', sep = '')))
+    for(i in 1:(perbinMax - perbinMin + 1)){
+      eval(parse(text = paste('perbinA',CondUnique[-1 * which(CondUnique %in% baseline)],'[i] = mean(','perbin',CondUnique[-1 * which(CondUnique %in% baseline)],'[,i])', sep = '')))
+      eval(parse(text = paste('perbinA',baseline,'[i] = mean(','perbin',baseline,'[,i])', sep = '')))
+    }
+
+    eval(parse(text = paste('file = tibble(Cond',baseline,' = ','perbinA',baseline,', Cond',CondUnique[-1 * which(CondUnique %in% baseline)],' = ', 'perbinA',CondUnique[-1 * which(CondUnique %in% baseline)],', Time = seq(perbinMin,perbinMax,1))',sep = '')))
+
+    Result[[2]] = file
+    Result[[3]] = TimePoint+perbinMin
+    Colname = names(file)
+    DF = file %>% gather(Condition,Value,-Time)
+    Result[[4]]= ggplot(data = DF, aes(x = Time, y = Value, color = Condition))+
+      geom_line(aes(group = Condition),size=1.2)+
+      scale_color_manual(values = c('grey10','grey50'))+
+      geom_vline(xintercept = TimePoint+perbinMin, linetype=3, size=0.8)+
+      labs(x = Xlab, y = Ylab,color = LegendM)+
+      theme(axis.title = element_text(size = WordSize),
+            axis.text = element_text(size = WordSize-3),
+            legend.title = element_text(size = WordSize),
+            legend.text = element_text(size = WordSize-3))
+  }
+
+  return(Result)
+}
+
+
+SurvivalAnalysis_Shiny = function(){
+  ui <- fluidPage(
+    titlePanel('SHINY Survival Analysis'),
+    sidebarLayout(
+
+      sidebarPanel(
+        actionButton(inputId = 'Run',label = 'Run!'),
+        fileInput("file1", "Choose the File of your data",
+                  accept = c(
+                    "text/csv",
+                    "text/comma-separated-values,text/plain",
+                    ".csv",'.xls','.txt','.xlsx')
+        ),
+        numericInput(inputId = 'obs','Set the number of row to scan',value = 6),
+
+        textInput('Sub','Input the name the variable of participant:',NULL),
+        textInput('IV','Input the name the variable of independent variable:',NULL),
+        textInput('DV','Input the name the variable of dependent variable:',NULL),
+        numericInput('bootstrapNumber','Input the number of bootstrap:',value = 1000),
+        numericInput('perbinMax','Input the maximum time bin:',value = 600),
+        numericInput('perbinMin','Input the minimum time bin:',value = 0),
+        textInput('baseline','Input the name of baseline condition',NULL),
+        textInput('Xlab','Input the title of x axis',NULL),
+        textInput('Ylab','Input the title of y axis',NULL),
+        textInput('LegendM','Input the title of legend',NULL),
+        sliderInput(inputId = 'WordSize',label = 'Set the size of words',min = 1,max = 30,step = 1,value = 15),
+
+        downloadButton("downloadTable", "Download the Survival Table")
+      )
+
+      ,
+      mainPanel(
+        tabsetPanel(type = 'tabs',
+                    tabPanel('Raw Data Summary',tableOutput("DataSummary"))),
+        tabsetPanel(type = 'tabs',
+                    tabPanel('Divergent time',textOutput("TimePoint")),
+                    tabPanel('Survival Table', tableOutput('SurvivalTable'))),
+        tabsetPanel(type = 'tabs',
+                    tabPanel('Plot', plotOutput('Plot')))
+
+      )
+    ))
+  server <- function(input, output) {
+    obs = reactive(input$obs)
+    Sub = reactive(input$Sub)
+    IV = reactive(input$IV)
+    DV = reactive(input$DV)
+    bootstrapNumber = reactive(input$bootstrapNumber)
+    perbinMax = reactive(input$perbinMax)
+    perbinMin = reactive(input$perbinMin)
+    baseline = reactive(input$baseline)
+    Xlab = reactive(input$Xlab)
+    Ylab = reactive(input$Ylab)
+    LegendM = reactive(input$LegendM)
+    WordSize = reactive(input$WordSize)
+
+    df = reactive({
+      inFile <- input$file1
+
+      if (is.null(inFile))
+        return(NULL)
+
+      rio::import(inFile$datapath)
+    })
+
+    output$DataSummary <- renderTable({
+      head(df(),obs())
+    })
+
+    Table = eventReactive(input$Run,{
+      SV(Data = df(),Sub = Sub(),IV = IV(),DV = DV(),bootstrapNumber = bootstrapNumber(),
+         perbinMax = perbinMax(),perbinMin = perbinMin(),baseline = baseline(),Ylab = Ylab(),
+         Xlab = Xlab(),LegendM = LegendM(),WordSize = WordSize())
+    })
+
+    output$TimePoint = renderText({
+      if(Table()[[1]] == 1){
+      paste('The divergent time point is ', Table()[[3]],' ms.')
+      }else{
+        paste0('There is no divergent time point.')
+      }
+    })
+
+    output$SurvivalTable = renderTable({
+      if(Table()[[1]] == 1){
+        head(Table()[[2]],obs())
+      }
+    })
+
+    output$Plot = renderPlot({
+      if(Table()[[1]] == 1){
+        Table()[[4]]
+      }
+    })
+
+    output$downloadData <- downloadHandler(
+      filename = function() {
+        paste('SurvivalTable', ".csv", sep = "")
+      },
+      content = function(file) {
+        rio::export(Table()[[2]], file)
+      }
+    )
+
+  }
+
+  print(shinyApp(ui, server))
+}
+
 ####################
 cat('\nThanks for using the Shiny user interface For Linear Mixed Model!\n\n')
 cat('Now there are several functions in your environment.\n
