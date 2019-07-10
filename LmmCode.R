@@ -1239,7 +1239,7 @@ Power_Shiny = function(){
 }
 
 SV = function(Data,Sub, IV, DV, bootstrapNumber = 1000, perbinMax = 300, perbinMin = 0, baseline,
-              Ylab = 'DV', Xlab = 'IV', LegendM, WordSize)
+              Ylab = 'DV', Xlab = 'IV', LegendM, WordSize, Title)
 {
   ############ calculate
   DataRaw = Data
@@ -1311,7 +1311,7 @@ SV = function(Data,Sub, IV, DV, bootstrapNumber = 1000, perbinMax = 300, perbinM
       geom_line(aes(group = Condition),size=1.2)+
       scale_color_manual(values = c('grey10','grey50'))+
       geom_vline(xintercept = TimePoint+perbinMin, linetype=3, size=0.8)+
-      labs(x = Xlab, y = Ylab,color = LegendM)+
+      labs(x = Xlab, y = Ylab,color = LegendM, title = Title)+
       theme(axis.title = element_text(size = WordSize),
             axis.text = element_text(size = WordSize-3),
             legend.title = element_text(size = WordSize),
@@ -1344,6 +1344,9 @@ SurvivalAnalysis_Shiny = function(){
         numericInput('perbinMax','Input the maximum time bin:',value = 600),
         numericInput('perbinMin','Input the minimum time bin:',value = 0),
         textInput('baseline','Input the name of baseline condition',NULL),
+        helpText('#######'),
+        helpText('Plot parameters'),
+        textInput('Title','Input the main title',NULL),
         textInput('Xlab','Input the title of x axis',NULL),
         textInput('Ylab','Input the title of y axis',NULL),
         textInput('LegendM','Input the title of legend',NULL),
@@ -1373,6 +1376,7 @@ SurvivalAnalysis_Shiny = function(){
     perbinMax = reactive(input$perbinMax)
     perbinMin = reactive(input$perbinMin)
     baseline = reactive(input$baseline)
+    Title = reactive(input$Title)
     Xlab = reactive(input$Xlab)
     Ylab = reactive(input$Ylab)
     LegendM = reactive(input$LegendM)
@@ -1394,7 +1398,7 @@ SurvivalAnalysis_Shiny = function(){
     Table = eventReactive(input$Run,{
       SV(Data = df(),Sub = Sub(),IV = IV(),DV = DV(),bootstrapNumber = bootstrapNumber(),
          perbinMax = perbinMax(),perbinMin = perbinMin(),baseline = baseline(),Ylab = Ylab(),
-         Xlab = Xlab(),LegendM = LegendM(),WordSize = WordSize())
+         Xlab = Xlab(),LegendM = LegendM(),WordSize = WordSize(),Title = Title())
     })
 
     output$TimePoint = renderText({
