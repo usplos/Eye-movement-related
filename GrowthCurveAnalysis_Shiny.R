@@ -11,50 +11,32 @@ if(!require(simr)){install.packages('simr')}
 if(!require(ggbeeswarm)){install.packages('ggbeeswarm')}
 if(!require(rio)){install.packages('rio')}
 
-TimeBinGenrate = function(df,Categories = 'Sub,AOI', OnsetName, rangemin, rangemax, steps = 100){
+TimeBinGenrate = function(df,Categories = 'Sub,Number,AOI', OnsetName, rangemin, rangemax, steps = 100){
   Category = strsplit(Categories,',') %>% unlist()
-  Command1 = ''
-  for (cc in Category) {
-    Command1 = paste0(Command1,' %>% split(.$',cc,') %>% map(function(d){d ',collapse = '')
-  }
-  Command1 = paste0('dfNew = df', substr(Command1,start = 1,stop = nchar(Command1)-2))
+  df = eval(parse(text = paste0('df %>% mutate(Cond = paste(',Categories,', sep=\'_\'))')))
 
   Function = function(d){
     eval(parse(text = paste0('d %>% filter(', OnsetName,' < rangemax, ', OnsetName,' > rangemin) %>% mutate(TimeBins = (',OnsetName,
                              '-rangemin) %/% steps + 1)')))
   }
 
-  Command2 = paste0('Function(d)',paste(rep('})',times = length(Category)),collapse = ''))
-  Command3 = paste0(Command1, Command2)
-  eval(parse(text = Command3))
-
-  CategoryDim = numeric(length = length(Category))
-  for (ll in 1:length(Category)) {
-    eval(parse(text = paste0('CategoryDim[[',ll,']] = length(unique(df$',Category[[ll]],'))')))
-  }
-
+  dfNew = df %>% split(.$Cond) %>% map(function(d) Function(d))
   dfNew2 = tibble()
-  Command4 = ''
-  for (dd in 1:length(CategoryDim)) {
-    Command4 = paste0(Command4 ,'for (ii',dd,' in 1:',CategoryDim[[dd]],'){ ')
+  for(dd in 1:length(dfNew)){
+    dfNew2 = rbind(dfNew2, dfNew[[dd]])
   }
-  Command5 = 'dfNew2 = rbind(dfNew2, dfNew'
-  for(dd in 1:length(CategoryDim)){
-    Command5 = paste0(Command5,'[[ii',dd,']]')
-  }
-  Command5 = paste0(Command5,')')
-  Command6 = paste0(rep('}',times = length(Category)),collapse = '')
-  Command7 = paste0(Command4, Command5, Command6)
-  eval(parse(text = Command7))
-
-  eval(parse(text = paste0('dfNew2 %>% group_by(',Category[1:(length(Category)-1)] %>% paste0(collapse = ''),
+  dfNew2 = dfNew2 %>% select(-Cond)
+  eval(parse(text = paste0('dfNew2 %>% group_by(',Category[1:(length(Category)-1)] %>% paste0(collapse = ','),
                            ', TimeBins) %>% mutate(FixNum = length(TimeBins)) %>% group_by(',Categories,
                            ', TimeBins) %>% summarise(FixProp = length(TimeBins)/unique(FixNum))')))
 
 }
+
 GrowthCurvePlot = function(df,Categories = 'Sub,AOI', OnsetName, rangemin, rangemax, steps = 100,
-                           Xlab, Ylab, legendMain){
+                           Xlab, Ylab, legendMain,Psize,Textsize){
   Category = strsplit(Categories,',') %>% unlist()
+  df = eval(parse(text = paste0('df %>% mutate(Cond = paste(',Categories,', sep=\'_\'))')))
+
   Command1 = ''
   for (cc in Category) {
     Command1 = paste0(Command1,' %>% split(.$',cc,') %>% map(function(d){d ',collapse = '')
@@ -66,39 +48,29 @@ GrowthCurvePlot = function(df,Categories = 'Sub,AOI', OnsetName, rangemin, range
                              '-rangemin) %/% steps + 1)')))
   }
 
-  Command2 = paste0('Function(d)',paste(rep('})',times = length(Category)),collapse = ''))
-  Command3 = paste0(Command1, Command2)
-  eval(parse(text = Command3))
-
-  CategoryDim = numeric(length = length(Category))
-  for (ll in 1:length(Category)) {
-    eval(parse(text = paste0('CategoryDim[[',ll,']] = length(unique(df$',Category[[ll]],'))')))
-  }
-
+  dfNew = df %>% split(.$Cond) %>% map(function(d) Function(d))
   dfNew2 = tibble()
-  Command4 = ''
-  for (dd in 1:length(CategoryDim)) {
-    Command4 = paste0(Command4 ,'for (ii',dd,' in 1:',CategoryDim[[dd]],'){ ')
+  for(dd in 1:length(dfNew)){
+    dfNew2 = rbind(dfNew2, dfNew[[dd]])
   }
-  Command5 = 'dfNew2 = rbind(dfNew2, dfNew'
-  for(dd in 1:length(CategoryDim)){
-    Command5 = paste0(Command5,'[[ii',dd,']]')
-  }
-  Command5 = paste0(Command5,')')
-  Command6 = paste0(rep('}',times = length(Category)),collapse = '')
-  Command7 = paste0(Command4, Command5, Command6)
-  eval(parse(text = Command7))
 
-  eval(parse(text = paste0('dfNew3 = dfNew2 %>% group_by(TimeBins) %>% mutate(FixNum = length(TimeBins)) %>% group_by(',Category[-1],
+  eval(parse(text = paste0('dfNew3 = dfNew2 %>% group_by(TimeBins) %>% mutate(FixNum = length(TimeBins)) %>% group_by(',Category[-1] %>% paste0(collapse = ','),
                            ', TimeBins) %>% summarise(FixProp = length(TimeBins)/unique(FixNum)) %>% mutate(Time = rangemin+steps*TimeBins+steps/2)')))
 
-  ggplot(data = dfNew3, aes(x = Time, y = FixProp, color = AOI %>% factor()))+
-    geom_point()+
-    geom_line(aes(group = AOI))+
-    labs(x = Xlab, y = Ylab, color = legendMain)+
-    scale_color_brewer(palette = 'Set1')
 
+  eval(parse(text = paste0('ggplot(data = dfNew3, aes(x = Time, y = FixProp, color = ',Category[[length(Category)]],' %>% factor()))+',
+                           'geom_point(size = Psize)+ geom_line(aes(group = ',Category[[length(Category)]],'))+',
+                           'labs(x = Xlab, y = Ylab, color = legendMain)+',
+                           'scale_color_brewer(palette = \'Set1\')',
+                           ifelse(length(Category)>2,
+                                  paste0('+facet_wrap(~',Category[[2]],', ncol=1)'),
+                                  ''),
+                           '+theme(axis.text = element_text(size = ',Textsize-3,'),',
+                           'axis.title = element_text(size = ',Textsize,'),',
+                           'legend.text = element_text(size = ',Textsize-3,'),',
+                           'legend.title = element_text(size = ',Textsize,'))')))
 }
+
 GrowthCurveAnalysis_shiny = function(){
   ui <- fluidPage(
     titlePanel('SHINY Growth Curve Analysis'),
@@ -112,7 +84,7 @@ GrowthCurveAnalysis_shiny = function(){
                     ".csv",'.xls','.txt','.xlsx')
         ),
 
-        textInput('Categories','Input the Categories (seperated by comma):', NULL),
+        textInput('Categories','Input the Categories (seperated by comma, the first one should be the name of subject, the last one should be the name of AOI):', NULL),
 
         textInput('OnsetName','Input the name of the variable of the onsettime:', NULL),
 
@@ -130,10 +102,14 @@ GrowthCurveAnalysis_shiny = function(){
         textInput('Xlab', 'Input the x axis label:',NULL),
         textInput('Ylab', 'Input the y axis label:',NULL),
         textInput('Llab', 'Input the legend main:',NULL),
+        numericInput(inputId = 'Psize',label = 'Set the size of point',value = 0.5,step = 0.01),
+        numericInput(inputId = 'Textsize',label = 'Set the size of text',value = 15,step = 0.1),
+        numericInput(inputId = 'Width',label = 'Set the plot Width',value = 400,step = 1),
+        numericInput(inputId = 'Height',label = 'Set the plot Height',value = 400,step = 1),
 
         downloadButton("downloadSummary", "Download the Summary"),
-
-        downloadButton("downloadANOVA", "Download the ANOVA")
+        downloadButton("downloadANOVA", "Download the ANOVA"),
+        downloadButton("downloadfixpropdata", "Download the fix prop data")
       )
 
       ,
@@ -146,7 +122,7 @@ GrowthCurveAnalysis_shiny = function(){
                     tabPanel('Model Summary',tableOutput("summary")),
                     tabPanel('Anova',tableOutput("Anova"))),
         tabsetPanel(type = 'tabs',
-                    tabPanel('Plot', plotOutput('Plot')))
+                    tabPanel('Plot', plotOutput('Plot',inline = T)))
 
       )
     ))
@@ -162,6 +138,10 @@ GrowthCurveAnalysis_shiny = function(){
     Xlab = reactive(input$Xlab)
     Ylab = reactive(input$Ylab)
     Llab = reactive(input$Llab)
+    Psize = reactive(input$Psize)
+    Textsize = reactive(input$Textsize)
+    Width = reactive(input$Width)
+    Height = reactive(input$Height)
 
     df = reactive({
       inFile <- input$file1
@@ -244,6 +224,15 @@ GrowthCurveAnalysis_shiny = function(){
       }
     )
 
+    output$downloadfixpropdata = downloadHandler(
+      filename = function(){
+        paste('FixPropData.csv',sep = '')
+      },
+      content = function(file){
+        rio::export(Table(), file)
+      }
+    )
+
     output$Plot = renderPlot({
       if(isTRUE(Plot())){
         GrowthCurvePlot(df = df(),
@@ -251,9 +240,10 @@ GrowthCurveAnalysis_shiny = function(){
                         OnsetName = OnsetName(),
                         rangemin = rangemin(),
                         rangemax = rangemax(),
-                        steps = steps(), Xlab = Xlab(),Ylab = Ylab(),legendMain = Llab())
+                        steps = steps(), Xlab = Xlab(),Ylab = Ylab(),legendMain = Llab(),
+                        Psize = Psize(),Textsize = Textsize())
       }
-    })
+    },width = function() return(Width()), height = function() return(Height()))
   }
 
   print(shinyApp(ui, server))
