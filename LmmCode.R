@@ -146,10 +146,7 @@ formula_generate_shiny = function(){
 
     Cluster2 = reactive(input$Cluster2)
 
-
-    Output = reactive(input$Output)
-
-    output$contents <- renderTable({
+    Formulas = reactive({
       if (IVNumber() == 2) {
         formula_generate(DV = DV(),
                          IV = c(IV1(), IV2()),
@@ -159,7 +156,11 @@ formula_generate_shiny = function(){
                          IV = c(IV1(), IV2(),IV3()),
                          Cluster = c(Cluster1(), Cluster2()))
       }
+    })
 
+
+    output$contents <- renderTable({
+      Formulas() %>% as_tibble()
     })
 
     output$downloadData <- downloadHandler(
@@ -167,9 +168,7 @@ formula_generate_shiny = function(){
         paste(input$DV,'Formulas', ".csv", sep = "")
       },
       content = function(file) {
-        rio::export(formula_generate(DV = DV(),
-                                   IV = c(IV1(), IV2()),
-                                   Cluster = c(Cluster1(), Cluster2())) %>% as_tibble(), file)
+        rio::export(Formulas() %>% as_tibble(), file)
       }
     )
 
