@@ -1687,9 +1687,10 @@ cat('########################\n4.You can run this command to filter data:\n
     Data_Filter_Shiny()\n\n########################\n\n')
 cat('########################\n5.You can run this command to calculate power and predict the size of subjects:\n
     Power_Shiny()\n\n########################\n\n')
+cat('########################\n6.You can run this command to perform survial analysis:\n
+    SurvivalAnalysis_Shiny()\n\n########################\n\n')
+cat('########################\n7.You can run this command to perform growth curve analysis:\n
+    GrowthCurveAnalysis_shiny()\n\n########################\n\n')
 cat('For more details and usages, please refer to the links below:\n
-    https://zhuanlan.zhihu.com/p/67680257\n
-    https://zhuanlan.zhihu.com/p/67048151\n
-    https://zhuanlan.zhihu.com/p/63092231\n
     https://zhuanlan.zhihu.com/p/68469202\n')
 cat('\n########################\nPlease note that there will be continuous updates, so be sure to look out for it')
