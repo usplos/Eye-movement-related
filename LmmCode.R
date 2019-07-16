@@ -1529,6 +1529,7 @@ GrowthCurveAnalysis_shiny = function(){
         numericInput("obs", "Set the number of observations to view:", 6),
 
         textInput('Formula','Input the formula:',NULL),
+        numericInput('NumPower', 'Set the highest power:',value = 4,step = 1),
 
         checkboxInput('Plot',label = 'Whether to plot growth curve',value = F),
         textInput('Xlab', 'Input the x axis label:',NULL),
@@ -1566,6 +1567,7 @@ GrowthCurveAnalysis_shiny = function(){
     steps = reactive(input$steps)
     obs = reactive(input$obs)
     Formula = reactive(input$Formula)
+    NumPower = reactive(input$NumPower)
     Plot = reactive(input$Plot)
     Xlab = reactive(input$Xlab)
     Ylab = reactive(input$Ylab)
@@ -1601,8 +1603,8 @@ GrowthCurveAnalysis_shiny = function(){
       Category = strsplit(Categories(),',') %>% unlist()
       dfAnalysis = function(df){
         eval(parse(text = paste0('df$',Category[[2]],' = factor(df$',Category[[2]],')')))
-        Time = poly(unique(df$TimeBins),4)
-        df[,paste0('ot',1:4)] = Time[df$TimeBins - min(df$TimeBins)+1,1:4]
+        Time = poly(unique(df$TimeBins),NumPower())
+        df[,paste0('ot',1:NumPower())] = Time[df$TimeBins - min(df$TimeBins)+1,1:NumPower()]
         return(df)
       }
       dfAnalysis(Table())
