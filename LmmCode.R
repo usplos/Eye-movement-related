@@ -1416,7 +1416,13 @@ SurvivalAnalysis_Shiny = function(){
 
     output$Plot = renderPlot({
       if(Table()[[1]] == 1){
-        Table()[[4]]
+        Table()[[4]]+
+          labs(x = Xlab(), y = Ylab(),color = LegendM(), title = Title())+
+          theme(plot.title = element_text(hjust = 0.5, size = WordSize()+3),
+                axis.title = element_text(size = WordSize()),
+                axis.text = element_text(size = WordSize()-3),
+                legend.title = element_text(size = WordSize()),
+                legend.text = element_text(size = WordSize()-3))
       }
     })
 
