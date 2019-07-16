@@ -1487,13 +1487,15 @@ GrowthCurvePlot = function(df,Categories = 'Sub,AOI', OnsetName, rangemin, range
   eval(parse(text = paste0('dfNew3 = dfNew2 %>% group_by(TimeBins) %>% mutate(FixNum = length(TimeBins)) %>% group_by(',Category[-1] %>% paste0(collapse = ','),
                            ', TimeBins) %>% summarise(FixProp = length(TimeBins)/unique(FixNum)) %>% mutate(Time = rangemin+steps*TimeBins+steps/2)')))
 
-
+  Xlab = paste0('\n',Xlab)
+  Ylab = paste0(Ylab,'\n')
   eval(parse(text = paste0('ggplot(data = dfNew3, aes(x = Time, y = FixProp, color = ',Category[[length(Category)]],' %>% factor()))+',
                            'geom_point(size = Psize)+ geom_line(aes(group = ',Category[[length(Category)]],'))+',
                            'labs(x = Xlab, y = Ylab, color = legendMain)+',
                            'scale_color_brewer(palette = \'Set1\')',
                            ifelse(length(Category)>2,
-                                  paste0('+facet_wrap(~',Category[[2]],', ncol=1)'),
+                                  paste0('+facet_wrap(~',Category[[2]],', ncol=1)+',
+                                         'theme(strip.text = element_text(size = ',Textsize,'))'),
                                   ''),
                            '+theme(axis.text = element_text(size = ',Textsize-3,'),',
                            'axis.title = element_text(size = ',Textsize,'),',
@@ -1678,7 +1680,6 @@ GrowthCurveAnalysis_shiny = function(){
 
   print(shinyApp(ui, server))
 }
-
 
 ####################
 cat('\nThanks for using the Shiny user interface For Linear Mixed Model!\n\n')
