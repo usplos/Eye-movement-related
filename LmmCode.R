@@ -1237,7 +1237,7 @@ Power_Shiny = function(){
   print(shinyApp(ui, server))
 }
 
-SV = function(Data,Sub, IV, DV, bootstrapNumber = 1000, perbinMax = 300, perbinMin = 0, baseline,
+SV = function(Data,Sub, IV, DV, bootstrapNumber = 1000, perbinMax = 300, perbinMin = 0, baseline, NumSig = 5,
               Ylab = 'DV', Xlab = 'IV', LegendM, WordSize, Title)
 {
   ############ calculate
@@ -1282,9 +1282,8 @@ SV = function(Data,Sub, IV, DV, bootstrapNumber = 1000, perbinMax = 300, perbinM
     Differ[i] = mean(CondCompare[,i]>0)
   }
   check = 0;TimePoint = NA;
-  for (i in 1:(perbinMax - perbinMin +1-4)) {
-    if(mean(Differ[i:(i+4)] > 0.95) == 1)
-    {
+  for (i in 1:(perbinMax - perbinMin + 1 - NumSig + 1)) {
+    if(mean(Differ[i:(i+NumSig - 1)] > 0.95) == 1){
       TimePoint = i;
       check = 1;break
     }
@@ -1340,6 +1339,7 @@ SurvivalAnalysis_Shiny = function(){
         textInput('IV','Input the name the variable of independent variable:',NULL),
         textInput('DV','Input the name the variable of dependent variable:',NULL),
         numericInput('bootstrapNumber','Input the number of bootstrap:',value = 1000),
+        numericInput('NumSig', 'Set the number of contineous significance:',value = 5,step = 1),
         numericInput('perbinMax','Input the maximum time bin:',value = 600),
         numericInput('perbinMin','Input the minimum time bin:',value = 0),
         textInput('baseline','Input the name of baseline condition',NULL),
@@ -1349,7 +1349,7 @@ SurvivalAnalysis_Shiny = function(){
         textInput('Xlab','Input the title of x axis',NULL),
         textInput('Ylab','Input the title of y axis',NULL),
         textInput('LegendM','Input the title of legend',NULL),
-        sliderInput(inputId = 'WordSize',label = 'Set the size of words',min = 1,max = 30,step = 1,value = 15),
+        numericInput(inputId = 'WordSize',label = 'Set the size of words',step = 0.1,value = 15),
 
         downloadButton("downloadTable", "Download the Survival Table")
       )
@@ -1372,6 +1372,7 @@ SurvivalAnalysis_Shiny = function(){
     IV = reactive(input$IV)
     DV = reactive(input$DV)
     bootstrapNumber = reactive(input$bootstrapNumber)
+    NumSig = reactive(input$NumSig)
     perbinMax = reactive(input$perbinMax)
     perbinMin = reactive(input$perbinMin)
     baseline = reactive(input$baseline)
@@ -1397,7 +1398,7 @@ SurvivalAnalysis_Shiny = function(){
     Table = eventReactive(input$Run,{
       SV(Data = df(),Sub = Sub(),IV = IV(),DV = DV(),bootstrapNumber = bootstrapNumber(),
          perbinMax = perbinMax(),perbinMin = perbinMin(),baseline = baseline(),Ylab = Ylab(),
-         Xlab = Xlab(),LegendM = LegendM(),WordSize = WordSize(),Title = Title())
+         Xlab = Xlab(),LegendM = LegendM(),WordSize = WordSize(),Title = Title(),NumSig = NumSig())
     })
 
     output$TimePoint = renderText({
