@@ -562,6 +562,8 @@ LMM_Model_Info_Shiny = function(){
         textInput('Xlab','Input the label of x axis:', NULL),
         textInput('LegendM','Input the title of legend:', NULL),
         sliderInput(inputId = 'LabelSize',label = 'Set the size of plot labels and title',min = 10, max = 50,step = 1, value = 10),
+        selectInput(inputId = 'FontFamily',label = 'Set the family of font in plot',
+                    choices = c('Default','Times New Roman','SimSun','Cambria','Times','Arial','Calibri'),selected = 'Default'),
         checkboxInput('Dots','Whether draw raw data (dots)?',F),
         numericInput(inputId = 'Width2',label = 'Set the plot Width',value = 400, min = 400, max = 10000,step = 1),
         numericInput(inputId = 'Height2',label = 'Set the plot Height',value = 400, min = 400, max = 10000,step = 1)
@@ -619,6 +621,7 @@ LMM_Model_Info_Shiny = function(){
     Xlab = reactive(input$Xlab)
     LegendM = reactive(input$LegendM)
     LabelSize = reactive(input$LabelSize)
+    FontFamily = reactive(input$FontFamily)
     Width2 = reactive(input$Width2)
     Height2 = reactive(input$Height2)
 
@@ -759,17 +762,32 @@ LMM_Model_Info_Shiny = function(){
     output$Plot = renderPlot({
       if(isTRUE(PLOT())){
 
+        FontFamilySet = function(P,Family = 'Times'){
+          p + theme(title = element_text(family = Family),
+                    text = element_text(family = Family))
+        }
+
         if(Geomtype() %in% 'violin plus raw data'){
 
-          ViolinRawdata(df = df(),IVNumber = IVNumber(),DepenVar = DepenVar2(),
+          p = ViolinRawdata(df = df(),IVNumber = IVNumber(),DepenVar = DepenVar2(),
                         Pred = Predictor(),Modu1 = Modulator1(),Modu2 = Modulator2(),
                         Themes = Themes(), Color = Color(),
                         Title = Title(), Xlab = Xlab(),Ylab = Ylab(), LegendM = LegendM(),LabelSize = LabelSize())
+          if (FontFamily() %in% 'Default') {
+            p
+          }else{
+            FontFamilySet(P = p,Family = FontFamily())
+          }
         }else if(Geomtype() %in% 'violin plus boxplot'){
-          ViolinBox(df = df(),IVNumber = IVNumber(),DepenVar = DepenVar2(),
+          p = ViolinBox(df = df(),IVNumber = IVNumber(),DepenVar = DepenVar2(),
                     Pred = Predictor(),Modu1 = Modulator1(),Modu2 = Modulator2(),
                     Themes = Themes(), Color = Color(),
                     Title = Title(), Xlab = Xlab(),Ylab = Ylab(), LegendM = LegendM(),LabelSize = LabelSize())
+          if (FontFamily() %in% 'Default') {
+            p
+          }else{
+            FontFamilySet(P = p,Family = FontFamily())
+          }
         }else{
           if(IVNumber() == 2){
             eval(parse(text = paste0('p = interactions::cat_plot(model = M(), pred = ',Predictor(),', ',
@@ -791,7 +809,7 @@ LMM_Model_Info_Shiny = function(){
                                      '), legend.title = element_text(size = ',LabelSize(),
                                      '), axis.text.y = element_text(size = ',LabelSize()-5,
                                      '), axis.text.x = element_text(size = ',LabelSize()-5,'))')))
-            eval(parse(text = paste0('p ',
+            eval(parse(text = paste0('p = p',
                                      switch(Themes(),
                                             'origin' = '',
                                             'APA' = '+jtools::theme_apa()',
@@ -803,6 +821,11 @@ LMM_Model_Info_Shiny = function(){
                                             'Stata' = '+ggthemes::theme_stata()',
                                             'New Excel' = '+ggthemes::theme_excel_new()',
                                             'Ugly Excel(NEVER USE PLEASE)' = '+ggthemes::theme_excel()'))))
+            if (FontFamily() %in% 'Default') {
+              p
+            }else{
+              FontFamilySet(P = p,Family = FontFamily())
+            }
           }else{
             eval(parse(text = paste0('p = interactions::cat_plot(model = M(), pred = ',Predictor(),', ',
                                      'modx = ',Modulator1(),', ',
@@ -824,7 +847,7 @@ LMM_Model_Info_Shiny = function(){
                                      '), legend.title = element_text(size = ',LabelSize(),
                                      '), axis.text.y = element_text(size = ',LabelSize()-5,
                                      '), axis.text.x = element_text(size = ',LabelSize()-5,'))')))
-            eval(parse(text = paste0('p ',
+            eval(parse(text = paste0('p = p',
                                      switch(Themes(),
                                             'origin' = '',
                                             'APA' = '+jtools::theme_apa()',
@@ -836,6 +859,11 @@ LMM_Model_Info_Shiny = function(){
                                             'Stata' = '+ggthemes::theme_stata()',
                                             'New Excel' = '+ggthemes::theme_excel_new()',
                                             'Ugly Excel(NEVER USE PLEASE)' = '+ggthemes::theme_excel()'))))
+            if (FontFamily() %in% 'Default') {
+              p
+            }else{
+              FontFamilySet(P = p,Family = FontFamily())
+            }
           }
         }
 
@@ -1463,7 +1491,7 @@ TimeBinGenrate = function(df,Categories = 'Sub,Number,AOI', OnsetName, rangemin,
 }
 
 GrowthCurvePlot = function(df,Categories = 'Sub,AOI', OnsetName, rangemin, rangemax, steps = 100,
-                           Xlab, Ylab, legendMain,Psize,Textsize){
+                           Xlab, Ylab, legendMain,Psize,Textsize,FontFamily='Default'){
   Category = strsplit(Categories,',') %>% unlist()
   df = eval(parse(text = paste0('df %>% mutate(Cond = paste(',Categories,', sep=\'_\'))')))
 
@@ -1489,7 +1517,7 @@ GrowthCurvePlot = function(df,Categories = 'Sub,AOI', OnsetName, rangemin, range
 
   Xlab = paste0('\n',Xlab)
   Ylab = paste0(Ylab,'\n')
-  eval(parse(text = paste0('ggplot(data = dfNew3, aes(x = Time, y = FixProp, color = ',Category[[length(Category)]],' %>% factor()))+',
+  eval(parse(text = paste0('p = ggplot(data = dfNew3, aes(x = Time, y = FixProp, color = ',Category[[length(Category)]],' %>% factor()))+',
                            'geom_point(size = Psize)+ geom_line(aes(group = ',Category[[length(Category)]],'))+',
                            'labs(x = Xlab, y = Ylab, color = legendMain)+',
                            'scale_color_brewer(palette = \'Set1\')',
@@ -1501,6 +1529,16 @@ GrowthCurvePlot = function(df,Categories = 'Sub,AOI', OnsetName, rangemin, range
                            'axis.title = element_text(size = ',Textsize,'),',
                            'legend.text = element_text(size = ',Textsize-3,'),',
                            'legend.title = element_text(size = ',Textsize,'))')))
+  FontFamilySet = function(P,Family = 'Times'){
+    p + theme(title = element_text(family = Family),
+              text = element_text(family = Family))
+  }
+
+  if (FontFamily %in% 'Default') {
+    p
+  }else{
+    FontFamilySet(P = p,Family = FontFamily)
+  }
 }
 
 GrowthCurveAnalysis_shiny = function(){
@@ -1537,6 +1575,8 @@ GrowthCurveAnalysis_shiny = function(){
         textInput('Llab', 'Input the legend main:',NULL),
         numericInput(inputId = 'Psize',label = 'Set the size of point',value = 0.5,step = 0.01),
         numericInput(inputId = 'Textsize',label = 'Set the size of text',value = 15,step = 0.1),
+        selectInput(inputId = 'FontFamily',label = 'Set the family of font in plot',
+                    choices = c('Default','Times New Roman','SimSun','Cambria','Times','Arial','Calibri'),selected = 'Default'),
         numericInput(inputId = 'Width',label = 'Set the plot Width',value = 400,step = 1),
         numericInput(inputId = 'Height',label = 'Set the plot Height',value = 400,step = 1),
 
@@ -1574,6 +1614,7 @@ GrowthCurveAnalysis_shiny = function(){
     Llab = reactive(input$Llab)
     Psize = reactive(input$Psize)
     Textsize = reactive(input$Textsize)
+    FontFamily = reactive(input$FontFamily)
     Width = reactive(input$Width)
     Height = reactive(input$Height)
 
@@ -1604,7 +1645,7 @@ GrowthCurveAnalysis_shiny = function(){
       dfAnalysis = function(df){
         eval(parse(text = paste0('df$',Category[[2]],' = factor(df$',Category[[2]],')')))
         Time = poly(unique(df$TimeBins),NumPower())
-        df[,paste0('ot',1:NumPower())] = Time[df$TimeBins - min(df$TimeBins)+1,1:NumPower()]
+        df[,paste0('ot',1:NumPower())] = Time[df$TimeBins - min(df$TimeBins)+1,1:NumPower]
         return(df)
       }
       dfAnalysis(Table())
@@ -1675,7 +1716,8 @@ GrowthCurveAnalysis_shiny = function(){
                         rangemin = rangemin(),
                         rangemax = rangemax(),
                         steps = steps(), Xlab = Xlab(),Ylab = Ylab(),legendMain = Llab(),
-                        Psize = Psize(),Textsize = Textsize())
+                        Psize = Psize(),Textsize = Textsize(),FontFamily = FontFamily())
+
       }
     },width = function() return(Width()), height = function() return(Height()))
   }
