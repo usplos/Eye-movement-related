@@ -1582,7 +1582,8 @@ GrowthCurveAnalysis_shiny = function(){
 
         downloadButton("downloadSummary", "Download the Summary"),
         downloadButton("downloadANOVA", "Download the ANOVA"),
-        downloadButton("downloadfixpropdata", "Download the fix prop data")
+        downloadButton("downloadfixpropdata", "Download the data for plot"),
+        downloadButton("downloadanalysisdata", "Download the data for analysis")
       )
 
       ,
@@ -1645,7 +1646,7 @@ GrowthCurveAnalysis_shiny = function(){
       dfAnalysis = function(df){
         eval(parse(text = paste0('df$',Category[[2]],' = factor(df$',Category[[2]],')')))
         Time = poly(unique(df$TimeBins),NumPower())
-        df[,paste0('ot',1:NumPower())] = Time[df$TimeBins - min(df$TimeBins)+1,1:NumPower]
+        df[,paste0('ot',1:NumPower())] = Time[df$TimeBins - min(df$TimeBins)+1,1:NumPower()]
         return(df)
       }
       dfAnalysis(Table())
@@ -1701,10 +1702,19 @@ GrowthCurveAnalysis_shiny = function(){
 
     output$downloadfixpropdata = downloadHandler(
       filename = function(){
-        paste('FixPropData.csv',sep = '')
+        paste('Data for plot.csv',sep = '')
       },
       content = function(file){
         rio::export(Table(), file)
+      }
+    )
+
+    output$downloadanalysisdata = downloadHandler(
+      filename = function(){
+        paste('Data for analysis.csv',sep = '')
+      },
+      content = function(file){
+        rio::export(df3(), file)
       }
     )
 
