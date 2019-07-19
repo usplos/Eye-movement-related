@@ -207,6 +207,7 @@ LMMRun_Parallel = function(df, DV=NULL, IV=NULL, Cluster=NULL, Ifrun = F, output
         R2.M = MuMIn::r.squaredGLMM(M)[[1]]
       },silent = F)
       resulttable = data.frame(formula = Formulas[formula.id],
+                               Nchar = nchar(Formulas[formula.id]),
                                R2.M = ifelse(exists('R2.M'),R2.M,NA),
                                R2.C = ifelse(exists('R2.C'),R2.C,NA),
                                AIC = MAIC,
@@ -227,6 +228,7 @@ LMMRun_Parallel = function(df, DV=NULL, IV=NULL, Cluster=NULL, Ifrun = F, output
         R2.M = MuMIn::r.squaredGLMM(M)[[1]]
       },silent = F)
       resulttable = data.frame(formula = Formulas[formula.id],
+                               Nchar = nchar(Formulas[formula.id]),
                                R2.M = ifelse(exists('R2.M'),R2.M,NA),
                                R2.C = ifelse(exists('R2.C'),R2.C,NA),
                                AIC = MAIC,
@@ -259,6 +261,14 @@ LMMRun_Parallel_shiny = function(){
     sidebarLayout(
 
       sidebarPanel(
+        fileInput("file1", "Choose the File of your data",
+                  accept = c(
+                    "text/csv",
+                    "text/comma-separated-values,text/plain",
+                    ".csv",'.xls','.txt','.xlsx')
+        ),
+        numericInput("obs", "Set the number of observations to view:", 6),
+
         textInput('DV','Input the dependent variable:','Y'),
 
         selectInput('IVNumber','Select the number of fixed factors',choices = c(2,3)),
@@ -286,24 +296,20 @@ LMMRun_Parallel_shiny = function(){
 
         textInput('Output', 'input the prefix name of ouput file:','Y'),
 
-        fileInput("file1", "Choose the File of your data",
-                  accept = c(
-                    "text/csv",
-                    "text/comma-separated-values,text/plain",
-                    ".csv",'.xls','.txt','.xlsx')
-        ),
-
-        actionButton("update", "Update View")
+        actionButton("Run", "Run!")
 
       ),
       mainPanel(
-        tableOutput("contents"),
+        tabsetPanel(type = 'tabs',
+                    tabPanel('Raw data',tableOutput("Raw")),
+                    tabPanel('Model information',tableOutput("contents"))),
         textOutput(outputId = 'End')
       )
     )
   )
 
   server <- function(input, output) {
+    obs = reactive(input$obs)
     DV = reactive(input$DV)
 
     IVNumber = reactive(input$IVNumber)
@@ -319,6 +325,7 @@ LMMRun_Parallel_shiny = function(){
     Cluster2 = reactive(input$Cluster2)
 
     Manual = reactive(input$Manual)
+    mfile = reactive(input$mfile)
 
     Ifrun = reactive(input$Ifrun)
 
@@ -332,12 +339,7 @@ LMMRun_Parallel_shiny = function(){
 
     Output = reactive(input$Output)
 
-    output$contents <- renderTable({
-      # input$file1 will be NULL initially. After the user selects
-      # and uploads a file, it will be a data frame with 'name',
-      # 'size', 'type', and 'datapath' columns. The 'datapath'
-      # column will contain the local filenames where the data can
-      # be found.
+    df = reactive({
       mfile = reactive(input$mfile)
 
       if(is.null(mfile)){
@@ -349,31 +351,42 @@ LMMRun_Parallel_shiny = function(){
       if (is.null(inFile))
         return(NULL)
 
-      d = rio::import(inFile$datapath)
+      rio::import(inFile$datapath)
+    })
 
-
+    ModelInfo = eventReactive(input$Run,{
       if(IVNumber() == 2){
-        LMMRun_Parallel(df = d,
+        LMMRun_Parallel(df = df(),
                         DV = DV(),
                         IV = c(IV1(), IV2()),
                         Cluster = c(Cluster1(), Cluster2()),
-                        Manual = Manual(),Manualcodefilename = m, Family = FamilyD(),
+                        Manual = Manual(),Manualcodefilename = mfile(), Family = FamilyD(),
                         Ifrun = Ifrun(),
                         Ncore = input$Ncore,
-                        output = Output()) %>% arrange(Singular,-Converge,BIC)
+                        output = Output())  %>% arrange(Singular,-Converge,-Nchar) %>%
+          select(-Nchar)
       }else{
-        LMMRun_Parallel(df = d,
+        LMMRun_Parallel(df = df(),
                         DV = DV(),
                         IV = c(IV1(), IV2(),IV3()),
                         Cluster = c(Cluster1(), Cluster2()),
-                        Manual = Manual(),Manualcodefilename = m, Family = FamilyD(),
+                        Manual = Manual(),Manualcodefilename = mfile(), Family = FamilyD(),
                         Ifrun = Ifrun(),
                         Ncore = input$Ncore,
-                        output = Output()) %>% arrange(Singular,-Converge,BIC)
+                        output = Output()) %>% arrange(Singular,-Converge,-Nchar) %>%
+          select(-Nchar)
       }
+    },ignoreNULL = T)
+
+    output$Raw = renderTable({
+      head(df(),obs())
     })
 
-    output$End = eventReactive(input$update,{
+    output$contents <- renderTable({
+      ModelInfo()
+    })
+
+    output$End = eventReactive(input$Run,{
       if(Output() %in% c('Marry','Thank', 'Wey')){
         'Thank help from Wey. Would you marry me?'
       }else{'   '}
