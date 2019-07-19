@@ -499,6 +499,14 @@ LMM_Model_Info_Shiny = function(){
 
       sidebarPanel(
         helpText('Model Building Part:'),
+        fileInput("file1", "Choose the File of your data",
+                  accept = c(
+                    "text/csv",
+                    "text/comma-separated-values,text/plain",
+                    ".csv",'.xls','.txt','.xlsx')
+        ),
+        numericInput("obs", "Set the number of observations to view:", 6),
+        
         selectInput('HLM','Whether to perform the HLM or GLM?',choices = c('HLM','GLM')),
         textInput('Formula','Input the formula:',NULL),
 
@@ -507,14 +515,6 @@ LMM_Model_Info_Shiny = function(){
 
         selectInput('Contrasts','Select the type of contrasts:',
                     choices = c('sum','treatment')),
-
-        fileInput("file1", "Choose the File of your data",
-                  accept = c(
-                    "text/csv",
-                    "text/comma-separated-values,text/plain",
-                    ".csv",'.xls','.txt','.xlsx')
-        ),
-        numericInput("obs", "Set the number of observations to view:", 6),
 
         helpText('#######################'),
         helpText('Histogram on each Participants:'),
