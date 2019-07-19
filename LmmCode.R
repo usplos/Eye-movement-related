@@ -1158,6 +1158,13 @@ Power_Shiny = function(){
         actionButton(inputId = 'Run',label = 'Run Power Calculation !!'),
         actionButton(inputId = 'Clear',label = 'Clear all variables in working space.'),
 
+        fileInput("file1", "Choose the File of your data",
+                  accept = c(
+                    "text/csv",
+                    "text/comma-separated-values,text/plain",
+                    ".csv",'.xls','.txt','.xlsx')
+        ),
+        numericInput("obs", "Set the number of observations to view:", 6),
         textInput('Formula','Input the formula:',NULL),
 
         checkboxInput(inputId = 'RunOrigin',label = 'Whether run the origin model?',value = T),
@@ -1178,13 +1185,6 @@ Power_Shiny = function(){
 
         sliderInput('Ncore','Set the paralle cores to run',min = 1, max = 20, step = 1, value = 4),
 
-        fileInput("file1", "Choose the File of your data",
-                  accept = c(
-                    "text/csv",
-                    "text/comma-separated-values,text/plain",
-                    ".csv",'.xls','.txt','.xlsx')
-        ),
-        numericInput("obs", "Set the number of observations to view:", 6),
         downloadButton("downloadData", "Download the power table")
       ),
       mainPanel(
@@ -1221,7 +1221,7 @@ Power_Shiny = function(){
       if (is.null(inFile))
         return(NULL)
 
-      import(inFile$datapath)
+      read.csv(inFile$datapath, header = T)
     })
     output$DataSummary = renderTable({
       head(df(),n = obs())
