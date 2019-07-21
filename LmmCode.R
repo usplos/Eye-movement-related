@@ -920,63 +920,25 @@ LMM_Model_Info_Shiny = function(){
 }
 
 ####################
-Datafilter = function(NGroup,df, DV, FilterO = T,
-                      Group1=NULL, Group2=NULL, Group3=NULL, Group4 = NULL, Group5 = NULL, ZV = 3){
-  if(NGroup == 0){
-    eval(parse(text = paste0('df2 = df ','%>% ',
-                             ifelse(isTRUE(FilterO), paste0('filter(',DV,' != 0) %>% '),''),
-                             ' mutate(Zvalue = scale(',DV,'))',' %>% ',
-                             'filter(abs(Zvalue) < ',ZV,')',' %>% ',
-                             'select(-Zvalue)')))
+Datafilter = function(df, DV, FilterO = T, FilterNA = T, Group=NULL, ZV = 3){
+  if(isTRUE(FilterO)){
+    eval(parse(text = paste0('df = df %>% filter(',DV,' != 0)')))
   }
-
-  if(NGroup == 1){
-    eval(parse(text = paste0('df2 = df %>% ',
-                             ifelse(isTRUE(FilterO), paste0('filter(',DV,' != 0) %>% '),''),
-                             'group_by(',Group1,')',' %>% ',
-                             'mutate(Zvalue = scale(',DV,'))', ' %>% ',
-                             'filter(abs(Zvalue) < ', ZV,')',' %>% ',
-                             'select(-Zvalue)')))
+  
+  if(isTRUE(FilterNA)){
+    eval(parse(text = paste0('df = df %>% filter(!is.na(',DV,'))')))
   }
-
-  if(NGroup == 2){
-    eval(parse(text = paste0('df2 = df %>% ',
-                             ifelse(isTRUE(FilterO), paste0('filter(',DV,' != 0) %>% '),''),
-                             'group_by(',Group1,', ',Group2,')',' %>% ',
-                             'mutate(Zvalue = scale(',DV,'))', ' %>% ',
-                             'filter(abs(Zvalue) < ', ZV,')',' %>% ',
-                             'select(-Zvalue)')))
+  
+  if(is.null(Group)){
+    eval(parse(text = paste0('df = df %>% mutate(Zvalue = scale(',DV,')) %>% filter(abs(Zvalue) < ',ZV,') %>% select(-Zvalue)')))
+  }else{
+    eval(parse(text = paste0('df = df %>% group_by(',Group,') %>% mutate(Zvalue = scale(',DV,')) %>% filter(abs(Zvalue) < ',ZV,') %>% select(-Zvalue)')))
   }
-
-  if(NGroup == 3){
-    eval(parse(text = paste0('df2 = df %>% ',
-                             ifelse(isTRUE(FilterO), paste0('filter(',DV,' != 0) %>% '),''),
-                             'group_by(',Group1,', ',Group2,', ',Group3,')',' %>% ',
-                             'mutate(Zvalue = scale(',DV,'))', ' %>% ',
-                             'filter(abs(Zvalue) < ', ZV,')',' %>% ',
-                             'select(-Zvalue)')))
-  }
-
-  if(NGroup == 4){
-    eval(parse(text = paste0('df2 = df %>% ',
-                             ifelse(isTRUE(FilterO), paste0('filter(',DV,' != 0) %>% '),''),
-                             'group_by(',Group1,', ',Group2,', ',Group3,', ',Group4,')',' %>% ',
-                             'mutate(Zvalue = scale(',DV,'))', ' %>% ',
-                             'filter(abs(Zvalue) < ', ZV,')',' %>% ',
-                             'select(-Zvalue)')))
-  }
-
-  if(NGroup == 5){
-    eval(parse(text = paste0('df2 = df %>% ',
-                             ifelse(isTRUE(FilterO), paste0('filter(',DV,' != 0) %>% '),''),
-                             'group_by(',Group1,', ',Group2,', ',Group3,', ',Group4,', ',Group5,')',' %>% ',
-                             'mutate(Zvalue = scale(',DV,'))', ' %>% ',
-                             'filter(abs(Zvalue) < ', ZV,')',' %>% ',
-                             'select(-Zvalue)')))
-  }
-
-  return(df2)
+  
+  
+  return(df)
 }
+
 Data_Filter_Shiny = function(){
   ui <- fluidPage(
     titlePanel('SHINY Data filter'),
@@ -989,26 +951,18 @@ Data_Filter_Shiny = function(){
                     "text/comma-separated-values,text/plain",
                     ".csv",'.xls','.txt','.xlsx')
         ),
+        
+        numericInput("obs", "Set the number of observations to view:", 6),
 
         textInput('DV','Input the dependent variable:',NULL),
 
         checkboxInput('Filter0','Whether to filter the data equal to 0',value = F),
+        
+        checkboxInput('FilterNA','Whether to filter the NA data',value = T),
 
-        selectInput('NumGroup','Select the number of categories',choices = c(0:5)),
-
-        textInput('G1','Input the 1st factor:', NULL),
-
-        textInput('G2','Input the 2nd factor:', NULL),
-
-        textInput('G3','Input the 3rd factor:', NULL),
-
-        textInput('G4','Input the 4th factor:', NULL),
-
-        textInput('G5','Input the 5th factor:', NULL),
+        textInput('Group','Input the group to categorise (seperated by comma). If there is no subgroup, need not input.',NULL),
 
         sliderInput('ZV','Set the Z value to filter',min = 1, max = 5,step = 0.1, value = 3),
-
-        numericInput("obs", "Set the number of observations to view:", 6),
 
         downloadButton("downloadData", "Download the filtered Data")
       )
@@ -1028,60 +982,41 @@ Data_Filter_Shiny = function(){
   server <- function(input, output) {
     DV = reactive(input$DV)
     Filter0 = reactive(input$Filter0)
-    NumGroup = reactive(input$NumGroup)
-    G1 = reactive(input$G1)
-    G2 = reactive(input$G2)
-    G3 = reactive(input$G3)
-    G4 = reactive(input$G4)
-    G5 = reactive(input$G5)
+    FilterNA = reactive(input$FilterNA)
+    Group = reactive(input$Group)
     ZV = reactive(input$ZV)
     obs = reactive(input$obs)
-
-
-    output$DataSummary = renderTable({
+    df = reactive({
       inFile <- input$file1
-
+      
       if (is.null(inFile))
         return(NULL)
+      
+      rio::import(inFile$datapath)
+    })
+    df2 = reactive({
+      Datafilter(df = df(),
+                 DV = DV(),
+                 FilterO = Filter0(),
+                 FilterNA = FilterNA(),
+                 Group = Group(),
+                 ZV = ZV())
+    })
 
-      d = rio::import(inFile$datapath)
-      head(d,n = obs())
+    output$DataSummary = renderTable({
+      head(df(),n = obs())
     })
 
     output$OldLine = renderText({
-      inFile <- input$file1
-
-      if (is.null(inFile))
-        return(NULL)
-
-      d = rio::import(inFile$datapath)
-      print(paste0('There are ', nrow(d),' lines.'))
+      print(paste0('There are ', nrow(df()),' lines.'))
     })
 
     output$DataFiltered = renderTable({
-      inFile <- input$file1
-
-      if (is.null(inFile))
-        return(NULL)
-
-      d = rio::import(inFile$datapath)
-      df = Datafilter(NGroup = NumGroup(), df = d,FilterO = Filter0(),
-                      DV = DV(),Group1 = G1(),Group2 = G2(),Group3 = G3(),Group4 = G4(),Group5 = G5(),
-                      ZV = ZV())
-      head(df, n = obs())
+      head(df2(), n = obs())
     })
 
     output$NewLine = renderText({
-      inFile <- input$file1
-
-      if (is.null(inFile))
-        return(NULL)
-
-      d = rio::import(inFile$datapath)
-      df = Datafilter(NGroup = NumGroup(), df = d,FilterO = Filter0(),
-                      DV = DV(),Group1 = G1(),Group2 = G2(),Group3 = G3(),Group4 = G4(),Group5 = G5(),
-                      ZV = ZV())
-      print(paste0('There are ', nrow(df),' lines.'))
+      print(paste0('There are ', nrow(df2()),' lines.'))
     })
 
     output$downloadData <- downloadHandler(
@@ -1089,16 +1024,7 @@ Data_Filter_Shiny = function(){
         paste(input$DV,'Filtered', ".csv", sep = "")
       },
       content = function(file) {
-        inFile <- input$file1
-
-        if (is.null(inFile))
-          return(NULL)
-
-        d = rio::import(inFile$datapath)
-        df = Datafilter(NGroup = NumGroup(), df = d,FilterO = Filter0(),
-                        DV = DV(),Group1 = G1(),Group2 = G2(),Group3 = G3(),Group4 = G4(),Group5 = G5(),
-                        ZV = ZV())
-        rio::export(df, file)
+        rio::export(df2(), file)
       }
     )
 
@@ -1107,7 +1033,7 @@ Data_Filter_Shiny = function(){
 
   print(shinyApp(ui, server))
 }
-
+                                 
 ####################
 PowerTable = function(df,formula, family, fixedeffect, subject, minsub, maxsub, steps, Ncore = 4, Nsim=100, RunOrigin = T){
   tic = Sys.time()
