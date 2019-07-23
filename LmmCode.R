@@ -426,11 +426,11 @@ ViolinRawdata = function(df,
                          DepenVar,
                          Modu1, Modu2, Pred,
                          Themes, Color,
-                         Title, Xlab, Ylab, LegendM, LabelSize){
+                         Title, Xlab, Ylab, LegendM, LabelSize, PAlpha,PSize=1){
   Height = eval(parse(text = paste0('(max(df$',DepenVar,')-min(df$',DepenVar,'))*0.007')))
   eval(parse(text = paste0('p = ggplot(data = df, aes(x = ',Pred,',y = ',DepenVar,', color = ',Modu1,'))+',
                            'geom_violin(alpha = 0,position = position_dodge(1))+',
-                           'geom_quasirandom(dodge.width = 1, alpha = 0.2,bandwidth = 0.1)+',
+                           'geom_quasirandom(dodge.width = 1, alpha = PAlpha, size = PSize, bandwidth = 0.1)+',
                            'geom_tile(data = df %>% group_by(', Pred, ',', Modu1, ifelse(IVNumber == 2,')',
                                                                                          paste0(',',Modu2,')')),
                            ' %>% summarize(M = mean(',DepenVar,')),',
@@ -519,7 +519,7 @@ LMM_Model_Info_Shiny = function(){
                     ".csv",'.xls','.txt','.xlsx')
         ),
         numericInput("obs", "Set the number of observations to view:", 6),
-        
+
         selectInput('HLM','Whether to perform the HLM or GLM?',choices = c('HLM','GLM')),
         textInput('Formula','Input the formula:',NULL),
 
@@ -563,6 +563,8 @@ LMM_Model_Info_Shiny = function(){
         selectInput('Geomtype','Select the geometry to draw',
                     choices = c('bar','line','violin plus raw data','violin plus boxplot')),
         textInput('DepenVar2','Input the name of column indication dependent variable to plot violin',NULL),
+        numericInput('PAlpha','Set the point alpha for Violin plot',value = 0.2, min = 0,max = 1),
+        numericInput('PSize','Set the point Size for Violin plot',value = 1,step = 0.1),
         selectInput('Themes','Select the theme of plot:',
                     choices = c('origin','APA','Solar','Wall Street Journal',
                                 'Economist','LibreOffice',
@@ -626,6 +628,8 @@ LMM_Model_Info_Shiny = function(){
     PLOT = reactive(input$Plot)
     Geomtype = reactive(input$Geomtype)
     DepenVar2 = reactive(input$DepenVar2)
+    PAlpha = reactive(input$PAlpha)
+    PSize = reactive(input$PSize)
     Themes = reactive(input$Themes)
     Color = reactive(input$Color)
     Dots = reactive(input$Dots)
@@ -785,7 +789,7 @@ LMM_Model_Info_Shiny = function(){
           p = ViolinRawdata(df = df(),IVNumber = IVNumber(),DepenVar = DepenVar2(),
                         Pred = Predictor(),Modu1 = Modulator1(),Modu2 = Modulator2(),
                         Themes = Themes(), Color = Color(),
-                        Title = Title(), Xlab = Xlab(),Ylab = Ylab(), LegendM = LegendM(),LabelSize = LabelSize())
+                        Title = Title(), Xlab = Xlab(),Ylab = Ylab(), LegendM = LegendM(),LabelSize = LabelSize(),PAlpha = PAlpha(),PSize = PSize())
           if (FontFamily() %in% 'Default') {
             p
           }else{
