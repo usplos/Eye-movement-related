@@ -1434,7 +1434,7 @@ TimeBinGenrate = function(df,Categories = 'Sub,Number,AOI', OnsetName, rangemin,
 }
 
 GrowthCurvePlot = function(df,Categories = 'Sub,AOI', OnsetName, rangemin, rangemax, steps = 100,
-                           Xlab, Ylab, legendMain,Psize,Textsize,FontFamily='Default'){
+                           Xlab, Ylab, legendMain,Psize,Textsize,FontFamily='Default', ColorVar = NULL, FacetVar){
   Category = strsplit(Categories,',') %>% unlist()
   df = eval(parse(text = paste0('df %>% mutate(Cond = paste(',Categories,', sep=\'_\'))')))
 
@@ -1460,12 +1460,16 @@ GrowthCurvePlot = function(df,Categories = 'Sub,AOI', OnsetName, rangemin, range
 
   Xlab = paste0('\n',Xlab)
   Ylab = paste0(Ylab,'\n')
-  eval(parse(text = paste0('p = ggplot(data = dfNew3, aes(x = Time, y = FixProp, color = ',Category[[length(Category)]],' %>% factor()))+',
-                           'geom_point(size = Psize)+ geom_line(aes(group = ',Category[[length(Category)]],'))+',
+  if(is.null(ColorVar)){
+    ColorVar = Category[[length(Category)]]
+    FacetVar = Category[[2]]
+  }
+  eval(parse(text = paste0('p = ggplot(data = dfNew3, aes(x = Time, y = FixProp, color = ',ColorVar,' %>% factor()))+',
+                           'geom_point(size = Psize)+ geom_line(aes(group = ',ColorVar,'))+',
                            'labs(x = Xlab, y = Ylab, color = legendMain)+',
                            'scale_color_brewer(palette = \'Set1\')',
                            ifelse(length(Category)>2,
-                                  paste0('+facet_wrap(~',Category[[2]],', ncol=1)+',
+                                  paste0('+facet_wrap(~',FacetVar,', ncol=1)+',
                                          'theme(strip.text = element_text(size = ',Textsize,'))'),
                                   ''),
                            '+theme(axis.text = element_text(size = ',Textsize-3,'),',
@@ -1516,6 +1520,8 @@ GrowthCurveAnalysis_shiny = function(){
         textInput('Xlab', 'Input the x axis label:',NULL),
         textInput('Ylab', 'Input the y axis label:',NULL),
         textInput('Llab', 'Input the legend main:',NULL),
+        textInput('ColorVar','Set the Color of point based on the name of variable',NULL),
+        textInput('FacetVar','Set the Facet of the plot based on the name of variable',NULL),
         numericInput(inputId = 'Psize',label = 'Set the size of point',value = 0.5,step = 0.01),
         numericInput(inputId = 'Textsize',label = 'Set the size of text',value = 15,step = 0.1),
         selectInput(inputId = 'FontFamily',label = 'Set the family of font in plot',
@@ -1556,6 +1562,8 @@ GrowthCurveAnalysis_shiny = function(){
     Xlab = reactive(input$Xlab)
     Ylab = reactive(input$Ylab)
     Llab = reactive(input$Llab)
+    ColorVar = reactive(input$ColorVar)
+    FacetVar = reactive(input$FacetVar)
     Psize = reactive(input$Psize)
     Textsize = reactive(input$Textsize)
     FontFamily = reactive(input$FontFamily)
@@ -1669,7 +1677,7 @@ GrowthCurveAnalysis_shiny = function(){
                         rangemin = rangemin(),
                         rangemax = rangemax(),
                         steps = steps(), Xlab = Xlab(),Ylab = Ylab(),legendMain = Llab(),
-                        Psize = Psize(),Textsize = Textsize(),FontFamily = FontFamily())
+                        Psize = Psize(),Textsize = Textsize(),FontFamily = FontFamily(),ColorVar = ColorVar(), FacetVar = FacetVar())
 
       }
     },width = function() return(Width()), height = function() return(Height()))
