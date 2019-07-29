@@ -1,4 +1,5 @@
 
+rm(list = ls())
 if(!require(tidyverse)){install.packages('tidyverse')}
 if(!require(parallel)){install.packages('parallel')}
 if(!require(shiny)){install.packages('shiny')}
