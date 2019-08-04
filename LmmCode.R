@@ -680,7 +680,7 @@ LMM_Model_Info_Shiny = function(){
     })
 
     output$summary = renderPrint({
-      HLM_summary(M())
+      summary(M())
     })
     output$downloadSummary <- downloadHandler(
       filename = function() {
