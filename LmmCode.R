@@ -11,6 +11,7 @@ if(!require(ggthemes)){install.packages('ggthemes')}
 if(!require(simr)){install.packages('simr')}
 if(!require(ggbeeswarm)){install.packages('ggbeeswarm')}
 if(!require(rio)){install.packages('rio')}
+if(!require(devtools)){install.packages('devtools')}
 if(!require(bruceR)){devtools::install_github("psychbruce/bruceR")}
 
 ####################
