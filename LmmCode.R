@@ -1731,3 +1731,9 @@ cat('########################\n7.You can run this command to perform growth curv
 cat('For more details and usages, please refer to the links below:\n
     https://zhuanlan.zhihu.com/p/68469202\n')
 cat('\n########################\nPlease note that there will be continuous updates, so be sure to look out for it')
+cat('\n\nPLEASE BE AWARE THAT bruceR package requires some later R version.
+So we suggest you use the R 3.6.1 as least.','\n\n')
+ifelse(as.double(R.Version()$minor) >= 6.1,
+       print('Your version is Fine'),
+       print('Your version is a bit old. You might need to update R.'))
+                             
