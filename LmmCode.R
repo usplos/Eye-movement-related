@@ -1734,6 +1734,6 @@ cat('\n########################\nPlease note that there will be continuous updat
 cat('\n\nPLEASE BE AWARE THAT bruceR package requires some later R version.
 So we suggest you use the R 3.6.1 as least.','\n\n')
 ifelse(as.double(R.Version()$minor) >= 6.1,
-       print('Your version is Fine'),
-       print('Your version is a bit old. You might need to update R.'))
+       print('Your version is FINE'),
+       print('Your version is a bit OLD. You might need to UPDATE R.'))
                              
