@@ -11,8 +11,8 @@ if(!require(ggthemes)){install.packages('ggthemes')}
 if(!require(simr)){install.packages('simr')}
 if(!require(ggbeeswarm)){install.packages('ggbeeswarm')}
 if(!require(rio)){install.packages('rio')}
-#if(!require(devtools)){install.packages('devtools')}
-#if(!require(bruceR)){devtools::install_github("psychbruce/bruceR")}
+if(!require(devtools)){install.packages('devtools')}
+if(!require(bruceR)){devtools::install_github("psychbruce/bruceR")}
 
 ####################
 formula_generate = function(DV, IV, Cluster){
@@ -594,6 +594,7 @@ LMM_Model_Info_Shiny = function(){
                     tabPanel('Sub.Histogram',plotOutput('Sub.Plot',inline = T))),
         tabsetPanel(type = 'tabs',
                     tabPanel('Model Summary',verbatimTextOutput("summary")),
+                    tabPanel('BruceR Model Summary',verbatimTextOutput("summary2")),
                     tabPanel('Anova',tableOutput("Anova"))),
         tabsetPanel(type = 'tabs',
                     tabPanel('Simple Effect',tableOutput('Emmeans'),tableOutput('Comparison'))),
@@ -662,15 +663,14 @@ LMM_Model_Info_Shiny = function(){
 
     M = reactive({
       options(contrasts = c(Contrasts(),'contr.poly'))
+      #DF = df()
       if(Family() %in% 'gaussian'){
         eval(parse(text = paste0(ifelse(HLM() %in% 'HLM', 'lmer','lm'),
-                                 '(data = df(),formula = as.formula(Formula()))')))
+                                 '(data = df(),formula = ',Formula(),')')))
 
       }else{
         eval(parse(text = paste0(ifelse(HLM() %in% 'HLM', 'glmer','glm'),
-                                 '(data = df(),formula = as.formula(Formula()),family = ', Family(),')')))
-
-
+                                 '(data = df(),formula = ',Formula(),',family = ', Family(),')')))
       }
     })
 
@@ -685,6 +685,24 @@ LMM_Model_Info_Shiny = function(){
           '\n  For this please see https://zhuanlan.zhihu.com/p/76459927',
           '\n  If you want to get the real differences, we suggest you use the simple effect analysis block below by setting the predictor and the first modulator as the same factor while keeping the number of fixed factor as 2')
     })
+    output$summary2 = renderPrint({
+      if(HLM() %in% 'HLM'){
+        if(Family() %in% 'gaussian'){
+          HLM_summary(M())
+        }else{
+          HLM_summary(formula = Formula() %>% as.formula(),
+                      data = df(),
+                      family = Family())
+        }
+      }else{
+        GLM_summary(M())
+      }
+
+      cat('\n  If you use sum contrasts, be aware the \'Estimate\' might not be equal to the real differences between the levels of the factor.',
+          '\n  For this please see https://zhuanlan.zhihu.com/p/76459927',
+          '\n  If you want to get the real differences, we suggest you use the simple effect analysis block below by setting the predictor and the first modulator as the same factor while keeping the number of fixed factor as 2')
+    })
+
     output$downloadSummary <- downloadHandler(
       filename = function() {
         paste(input$DV,'Fixed_Effect_Table', ".csv", sep = "")
