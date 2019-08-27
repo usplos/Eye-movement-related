@@ -680,7 +680,10 @@ LMM_Model_Info_Shiny = function(){
     })
 
     output$summary = renderPrint({
-      summary(M())
+      summary(M()) %>% print()
+      cat('\n  If you use sum contrasts, be aware the \'Estimate\' might not be equal to the real differences between the levels of the factor.',
+          '\n  For this please see https://zhuanlan.zhihu.com/p/76459927',
+          '\n  If you want to get the real differences, we suggest you use the simple effect analysis block below by setting the predictor and the first modulator as the same factor while keeping the number of fixed factor as 2')
     })
     output$downloadSummary <- downloadHandler(
       filename = function() {
@@ -790,9 +793,9 @@ LMM_Model_Info_Shiny = function(){
         if(Geomtype() %in% 'violin plus raw data'){
 
           p = ViolinRawdata(df = df(),IVNumber = IVNumber(),DepenVar = DepenVar2(),
-                        Pred = Predictor(),Modu1 = Modulator1(),Modu2 = Modulator2(),
-                        Themes = Themes(), Color = Color(),
-                        Title = Title(), Xlab = Xlab(),Ylab = Ylab(), LegendM = LegendM(),LabelSize = LabelSize(),PAlpha = PAlpha(),PSize = PSize())
+                            Pred = Predictor(),Modu1 = Modulator1(),Modu2 = Modulator2(),
+                            Themes = Themes(), Color = Color(),
+                            Title = Title(), Xlab = Xlab(),Ylab = Ylab(), LegendM = LegendM(),LabelSize = LabelSize(),PAlpha = PAlpha(),PSize = PSize())
           if (FontFamily() %in% 'Default') {
             p
           }else{
@@ -800,9 +803,9 @@ LMM_Model_Info_Shiny = function(){
           }
         }else if(Geomtype() %in% 'violin plus boxplot'){
           p = ViolinBox(df = df(),IVNumber = IVNumber(),DepenVar = DepenVar2(),
-                    Pred = Predictor(),Modu1 = Modulator1(),Modu2 = Modulator2(),
-                    Themes = Themes(), Color = Color(),
-                    Title = Title(), Xlab = Xlab(),Ylab = Ylab(), LegendM = LegendM(),LabelSize = LabelSize())
+                        Pred = Predictor(),Modu1 = Modulator1(),Modu2 = Modulator2(),
+                        Themes = Themes(), Color = Color(),
+                        Title = Title(), Xlab = Xlab(),Ylab = Ylab(), LegendM = LegendM(),LabelSize = LabelSize())
           if (FontFamily() %in% 'Default') {
             p
           }else{
@@ -931,18 +934,18 @@ Datafilter = function(df, DV, FilterO = T, FilterNA = T, Group=NULL, ZV = 3){
   if(isTRUE(FilterO)){
     eval(parse(text = paste0('df = df %>% filter(',DV,' != 0)')))
   }
-  
+
   if(isTRUE(FilterNA)){
     eval(parse(text = paste0('df = df %>% filter(!is.na(',DV,'))')))
   }
-  
+
   if(is.null(Group)){
     eval(parse(text = paste0('df = df %>% mutate(Zvalue = scale(',DV,')) %>% filter(abs(Zvalue) < ',ZV,') %>% select(-Zvalue)')))
   }else{
     eval(parse(text = paste0('df = df %>% group_by(',Group,') %>% mutate(Zvalue = scale(',DV,')) %>% filter(abs(Zvalue) < ',ZV,') %>% select(-Zvalue)')))
   }
-  
-  
+
+
   return(df)
 }
 
@@ -958,13 +961,13 @@ Data_Filter_Shiny = function(){
                     "text/comma-separated-values,text/plain",
                     ".csv",'.xls','.txt','.xlsx')
         ),
-        
+
         numericInput("obs", "Set the number of observations to view:", 6),
 
         textInput('DV','Input the dependent variable:',NULL),
 
         checkboxInput('Filter0','Whether to filter the data equal to 0',value = F),
-        
+
         checkboxInput('FilterNA','Whether to filter the NA data',value = T),
 
         textInput('Group','Input the group to categorise (seperated by comma). If there is no subgroup, need not input.',NULL),
@@ -995,10 +998,10 @@ Data_Filter_Shiny = function(){
     obs = reactive(input$obs)
     df = reactive({
       inFile <- input$file1
-      
+
       if (is.null(inFile))
         return(NULL)
-      
+
       rio::import(inFile$datapath)
     })
     df2 = reactive({
@@ -1040,7 +1043,7 @@ Data_Filter_Shiny = function(){
 
   print(shinyApp(ui, server))
 }
-                                 
+
 ####################
 PowerTable = function(df,formula, family, fixedeffect, subject, minsub, maxsub, steps, Ncore = 4, Nsim=100, RunOrigin = T){
   tic = Sys.time()
@@ -1377,7 +1380,7 @@ SurvivalAnalysis_Shiny = function(){
 
     output$TimePoint = renderText({
       if(Table()[[1]] == 1){
-      paste('The divergent time point is ', Table()[[3]],' ms.')
+        paste('The divergent time point is ', Table()[[3]],' ms.')
       }else{
         paste0('There is no divergent time point.')
       }
