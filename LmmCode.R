@@ -595,7 +595,9 @@ LMM_Model_Info_Shiny = function(){
         tabsetPanel(type = 'tabs',
                     tabPanel('Model Summary',verbatimTextOutput("summary")),
                     tabPanel('BruceR Model Summary',verbatimTextOutput("summary2")),
-                    tabPanel('Anova',tableOutput("Anova"))),
+                    tabPanel('Anova',tableOutput("Anova")),
+                    tabPanel('Residual Distribution', plotOutput('ResiPlot',inline = F)),
+                    tabPanel('Residual Density', plotOutput('ResiPlot2',inline = F))),
         tabsetPanel(type = 'tabs',
                     tabPanel('Simple Effect',tableOutput('Emmeans'),tableOutput('Comparison'))),
         tabsetPanel(type = 'tabs',
@@ -735,6 +737,15 @@ LMM_Model_Info_Shiny = function(){
         rio::export(M1, file)
       }
     )
+
+    output$ResiPlot = renderPlot({
+      qplot(residuals(M()), ylab = 'Count', xlab = 'Residual', color = I('black'), fill = I('purple'))
+    },width = 600,height = 400)
+
+    output$ResiPlot2 = renderPlot({
+      qplot(residuals(M()), geom = 'density', ylab = 'Propability Density', xlab = 'Residual', size=I(1), color = I('black'))+
+        geom_vline(xintercept = 0, size=1, color = I('red'))
+    },width = 600,height = 400)
 
     output$Emmeans = renderTable({
       if(isTRUE(SimpleEffect())){
