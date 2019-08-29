@@ -25,6 +25,7 @@ if(p == 1){
   if(!require(bruceR)){devtools::install_github("psychbruce/bruceR")}
 }
 
+
 formula_generate = function(DV, IV, Cluster){
   library(tidyverse)
   IVL = length(IV)
@@ -988,7 +989,7 @@ LMM_Shinys = function(){
       qplot(residuals(MModelBuild()), ylab = 'Count', xlab = 'Residual', color = I('black'), fill = I('purple'))
     },width = function() return(WidthModelBuild()), height = function() return(HeightModelBuild()))
 
-    output$ResiPlot2 = renderPlot({
+    output$ResiPlot2ModelBuild = renderPlot({
       qplot(residuals(M()), geom = 'density', ylab = 'Propability Density', xlab = 'Residual', size=I(1), color = I('black'))+
         geom_vline(xintercept = 0, size=1, color = I('red'))
     },width = function() return(WidthModelBuild()), height = function() return(HeightModelBuild()))
