@@ -12,8 +12,18 @@ if(!require(ggthemes)){install.packages('ggthemes')}
 if(!require(simr)){install.packages('simr')}
 if(!require(ggbeeswarm)){install.packages('ggbeeswarm')}
 if(!require(rio)){install.packages('rio')}
-if(!require(devtools)){install.packages('devtools')}
-if(!require(bruceR)){devtools::install_github("psychbruce/bruceR")}
+cat('Would you use the bruceR package? please enter 1 or 2\n',
+    '1: Yes, I use\n',
+    '2: No, I dont use.')
+p = scan(nmax = 1)
+while(p != 1 & p != 2){
+  print('You have not input the right number, please enter again.')
+  p = scan(nmax = 1)
+}
+if(p == 1){
+  if(!require(devtools)){install.packages('devtools')}
+  if(!require(bruceR)){devtools::install_github("psychbruce/bruceR")}
+}
 
 formula_generate = function(DV, IV, Cluster){
   library(tidyverse)
