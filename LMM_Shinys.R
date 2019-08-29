@@ -990,7 +990,7 @@ LMM_Shinys = function(){
     },width = function() return(WidthModelBuild()), height = function() return(HeightModelBuild()))
 
     output$ResiPlot2ModelBuild = renderPlot({
-      qplot(residuals(M()), geom = 'density', ylab = 'Propability Density', xlab = 'Residual', size=I(1), color = I('black'))+
+      qplot(residuals(MModelBuild()), geom = 'density', ylab = 'Propability Density', xlab = 'Residual', size=I(1), color = I('black'))+
         geom_vline(xintercept = 0, size=1, color = I('red'))
     },width = function() return(WidthModelBuild()), height = function() return(HeightModelBuild()))
 
