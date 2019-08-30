@@ -558,6 +558,7 @@ LMM_Shinys = function(){
                                     collapsible = T,status = 'info',collapsed = T,width = NULL,solidHeader = T,
                                     checkboxInput('SimpleEffectModelBuild',label = 'Whether to preform the simple effect analysis?',value = F),
                                     selectInput('IVNumberModelBuild','Select the number of fixed factors',choices = c(2,3)),
+                                    numericInput('pbkrlimitModelBuild','Set the limit of pbkrtest:',value = 3000),
                                     textInput('PredictorModelBuild','Input the predictor`s name',NULL),
                                     textInput('Modulator1ModelBuild','Input the 1st modulator`s name',NULL),
                                     textInput('Modulator2ModelBuild','Input the 2nd modulator`s name if have',NULL),
@@ -876,6 +877,7 @@ LMM_Shinys = function(){
 
     SimpleEffectModelBuild = reactive(input$SimpleEffectModelBuild)
     IVNumberModelBuild = reactive(input$IVNumberModelBuild)
+    pbkrlimitModelBuild = reactive(input$pbkrlimitModelBuild)
     PredictorModelBuild = reactive(input$PredictorModelBuild)
     Modulator1ModelBuild = reactive(input$Modulator1ModelBuild)
     Modulator2ModelBuild = reactive(input$Modulator2ModelBuild)
@@ -996,7 +998,7 @@ LMM_Shinys = function(){
 
     output$EmmeansModelBuild = renderTable({
       if(isTRUE(SimpleEffectModelBuild())){
-
+        emm_options(pbkrtest.limit = pbkrlimitModelBuild())
         if(IVNumberModelBuild() == 2){
           eval(parse(text = paste0('emmeans(MModelBuild(), pairwise~',PredictorModelBuild(),'|',Modulator1ModelBuild(),')$emm')))
         }else{
@@ -1013,7 +1015,7 @@ LMM_Shinys = function(){
       },
       content = function(file) {
         if(isTRUE(SimpleEffectModelBuild())){
-
+          emm_options(pbkrtest.limit = pbkrlimitModelBuild())
           options(digits = 3)
           if(IVNumberModelBuild() == 2){
             eval(parse(text = paste0('M1 = emmeans(MModelBuild(), pairwise~',PredictorModelBuild(),'|',Modulator1ModelBuild(),')$emm %>% as_tibble()')))
