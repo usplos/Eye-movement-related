@@ -25,7 +25,7 @@ if(as.double(R.Version()$minor) >= 6.1){
     if(!require(devtools)){install.packages('devtools')}
     if(!require(bruceR)){devtools::install_github("psychbruce/bruceR")}
   }
-
+  remove(p)
 
   formula_generate = function(DV, IV, Cluster){
     library(tidyverse)
