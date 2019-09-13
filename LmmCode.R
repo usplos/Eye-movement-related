@@ -217,7 +217,7 @@ if(as.double(R.Version()$minor) >= 6.1){
         MConverge = ifelse(length(M@optinfo$conv$lme4$messages[grep(pattern = 'Model failed to converge',
                                                                     x = M@optinfo$conv$lme4$message)]) > 0,
                            F,T)
-        M.Singular = isSingular(M)
+        M.Singular = isSingular(M,tol=0.0001)
         try({
           R2.C = MuMIn::r.squaredGLMM(M)[[2]]
           R2.M = MuMIn::r.squaredGLMM(M)[[1]]
@@ -235,7 +235,7 @@ if(as.double(R.Version()$minor) >= 6.1){
         M = glmer(data = df, as.formula(Formulas[formula.id]), family = Family)
         MAIC = AIC(M)
         MBIC = BIC(M)
-        M.Singular = isSingular(M)
+        M.Singular = isSingular(M,tol=0.0001)
         MConverge = ifelse(length(M@optinfo$conv$lme4$messages[grep(pattern = 'Model failed to converge',
                                                                     x = M@optinfo$conv$lme4$message)]) > 0,
                            F,T)
