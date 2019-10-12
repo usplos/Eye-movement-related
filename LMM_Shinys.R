@@ -322,59 +322,55 @@ if(as.double(R.Version()$minor) >= 6.1){
     return(df)
   }
 
-  PowerTable = function(df,formula, family, fixedeffect, subject, minsub, maxsub, steps, Ncore = 4, Nsim=100, RunOrigin = T){
-    tic = Sys.time()
-    NumP = c(eval(parse(text = paste0('length(unique(df','$',subject,'))'))),
-             seq(from = minsub, to = maxsub, steps))
-    eval(parse(text = paste0('M = ',ifelse(family == 'gaussian','lmer(','glmer('),
-                             'data = df', ',',
-                             formula,
-                             ifelse(family == 'gaussian',')',
-                                    paste0(', family = \'',family,'\')')))))
-    if(isTRUE(RunOrigin)){
-      eval(parse(text = paste0('PA = powerSim(M, fixed(\'',fixedeffect,'\'), nsim = ',Nsim,', alpha = 0.05)')))
-      Number = NumP[1]
-      Power = mean(PA$pval<0.05)*100
-      ConfLow = binom.test(x = sum(PA$pval<0.05),n = length(PA$pval),p = 0.5)$conf.int[1]*100
-      ConfUp = binom.test(x = sum(PA$pval<0.05),n = length(PA$pval),p = 0.5)$conf.int[2]*100
-      FirstOne = data.frame(SubNumber = Number,
-                            PowerValue = Power,
-                            ConfUp,ConfLow)
-    }
-
-    PowerOne = function(ss){
-      library(simr)
-      eval(parse(text = paste0('M2 = extend(M, along = \'',subject,'\',n = ',NumP[ss],')')))
-      eval(parse(text = paste0('PA = powerSim(M2, fixed(\'',fixedeffect,'\'), nsim = ',Nsim,', alpha = 0.05)')))
-      Number = NumP[ss]
-      Power = mean(PA$pval<0.05)*100
-      ConfLow = binom.test(x = sum(PA$pval<0.05),n = length(PA$pval),p = 0.5)$conf.int[1]*100
-      ConfUp = binom.test(x = sum(PA$pval<0.05),n = length(PA$pval),p = 0.5)$conf.int[2]*100
-      print(paste('Sample size with ', NumP[ss], ' has been done!'))
-      return(data.frame(SubNumber = Number,
-                        PowerValue = Power,
-                        ConfUp,ConfLow))
-    }
-
-
-    SS = sample(2:length(NumP),length(NumP)-1)
-    cat(length(NumP)-1, 'Power calculating are running with', Ncore, ' parallel cores..............\n\n')
-    library(parallel)
-    cl <- makeCluster(Ncore)
-    clusterExport(cl, c('subject','NumP','fixedeffect','M','df','formula','Nsim'), envir = environment())
-    clusterEvalQ(cl,c('simr','tidyverse'))
-    DF <- do.call('rbind',parLapply(cl,SS, PowerOne))
-    stopCluster(cl)
-
-    if(isTRUE(RunOrigin)){
-      DF = bind_rows(FirstOne, DF)
-    }
-
-    DF = DF %>% arrange(SubNumber)
-    a = Sys.time()-tic
-    cat('Power running has taken',a[[1]],attributes(a)$unit,'\n\n')
-    return(DF)
+  PowerTable = function(df,formula, family, fixedeffect, subject, minsub, maxsub, steps, Nsim=100, RunOrigin = T){
+  tic = Sys.time()
+  NumP = c(eval(parse(text = paste0('length(unique(df','$',subject,'))'))),
+           seq(from = minsub, to = maxsub, steps))
+  eval(parse(text = paste0('M = ',ifelse(family == 'gaussian','lmer(','glmer('),
+                           'data = df', ',',
+                           formula,
+                           ifelse(family == 'gaussian',')',
+                                  paste0(', family = \'',family,'\')')))))
+  if(isTRUE(RunOrigin)){
+    eval(parse(text = paste0('PA = powerSim(M, fixed(\'',fixedeffect,'\'), nsim = ',Nsim,', alpha = 0.05)')))
+    Number = NumP[1]
+    Power = mean(PA$pval<0.05)*100
+    ConfLow = binom.test(x = sum(PA$pval<0.05),n = length(PA$pval),p = 0.5)$conf.int[1]*100
+    ConfUp = binom.test(x = sum(PA$pval<0.05),n = length(PA$pval),p = 0.5)$conf.int[2]*100
+    FirstOne = data.frame(SubNumber = Number,
+                          PowerValue = Power,
+                          ConfUp,ConfLow)
   }
+  
+  PowerOne = function(ss){
+    library(simr)
+    eval(parse(text = paste0('M2 = extend(M, along = \'',subject,'\',n = ',NumP[ss],')')))
+    eval(parse(text = paste0('PA = powerSim(M2, fixed(\'',fixedeffect,'\'), nsim = ',Nsim,', alpha = 0.05)')))
+    Number = NumP[ss]
+    Power = mean(PA$pval<0.05)*100
+    ConfLow = binom.test(x = sum(PA$pval<0.05),n = length(PA$pval),p = 0.5)$conf.int[1]*100
+    ConfUp = binom.test(x = sum(PA$pval<0.05),n = length(PA$pval),p = 0.5)$conf.int[2]*100
+    print(paste('Sample size with ', NumP[ss], ' has been done!'))
+    return(data.frame(SubNumber = Number,
+                      PowerValue = Power,
+                      ConfUp,ConfLow))
+  }
+  
+  
+  SS = 2:length(NumP)
+  DF = mapply(PowerOne,SS) %>% t()
+  DF = DF %>% unlist() %>% matrix(ncol = 4) %>% as_tibble()
+  names(DF) = c('SubNumber','PowerValue','ConfUp','ConfLow')
+  
+  if(isTRUE(RunOrigin)){
+    DF = bind_rows(FirstOne, DF)
+  }
+  
+  DF = DF %>% arrange(SubNumber)
+  a = Sys.time()-tic
+  cat('Power running has taken',a[[1]],attributes(a)$unit,'\n\n')
+  return(DF)
+}
 
   LMM_Shinys = function(){
     ui <- dashboardPage(
@@ -648,8 +644,6 @@ if(as.double(R.Version()$minor) >= 6.1){
                                sliderInput('StepPowercal','Set the step to increase:',min = 1, max = 20,step = 1,value = 10),
 
                                numericInput('NsimPowercal','Input the number of simulations:',100),
-
-                               sliderInput('NcorePowercal','Set the paralle cores to run',min = 1, max = 20, step = 1, value = 4),
 
                                downloadButton("downloadDataPowercal", "Download the power table"))),
                     column(width = 6,
@@ -1211,7 +1205,6 @@ if(as.double(R.Version()$minor) >= 6.1){
       MinSubPowercal = reactive(input$MinSubPowercal)
       MaxSubPowercal = reactive(input$MaxSubPowercal)
       StepPowercal = reactive(input$StepPowercal)
-      NcorePowercal = reactive(input$NcorePowercal)
       NsimPowercal = reactive(input$NsimPowercal)
       obsPowercal = reactive(input$obsPowercal)
 
@@ -1231,7 +1224,7 @@ if(as.double(R.Version()$minor) >= 6.1){
         PowerTable(formula = FormulaPowercal(),family = FamilyPowercal(),
                    fixedeffect = FixedEffectPowercal(),subject = SubjectPowercal(),
                    minsub = MinSubPowercal(),maxsub = MaxSubPowercal(),steps = StepPowercal(),df = dfPowercal(),
-                   Ncore = NcorePowercal(),Nsim = NsimPowercal(),RunOrigin = RunOriginPowercal())
+                   Nsim = NsimPowercal(),RunOrigin = RunOriginPowercal())
       },ignoreNULL = F)
 
       output$PowerPowercal = renderTable({
