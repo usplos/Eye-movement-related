@@ -1220,7 +1220,7 @@ if(as.double(R.Version()$minor) >= 6.1){
         head(dfPowercal(),n = obsPowercal())
       })
 
-      TablePowercal = eventReactive(input$Run,{
+      TablePowercal = eventReactive(input$RunPowercal,{
         PowerTable(formula = FormulaPowercal(),family = FamilyPowercal(),
                    fixedeffect = FixedEffectPowercal(),subject = SubjectPowercal(),
                    minsub = MinSubPowercal(),maxsub = MaxSubPowercal(),steps = StepPowercal(),df = dfPowercal(),
