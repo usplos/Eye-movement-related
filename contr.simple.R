@@ -1,6 +1,6 @@
 contr.simple = function(n){
   if(n == 2){
-    return(contr.sum(2)/2)
+    return(contr.sum(2)/2*(-1))
   }else{
     firstline = matrix(-1/n, nrow = 1, ncol = n-1)
     restlines = matrix(0, nrow = n-1, ncol = n-1)
