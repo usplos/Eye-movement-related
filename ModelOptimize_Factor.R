@@ -1,26 +1,38 @@
-source('https://raw.githubusercontent.com/usplos/Eye-movement-related/master/contr.simple.R')
 
-ModelOptimize_Factor = function(Data, DV, Fix_Factor, Re_Factor,Family = 'gaussian', criterionPCA = 0.01){
-  Data[Fix_Factor] = lapply(Data[Fix_Factor], factor)
-  Data[Re_Factor] = lapply(Data[Re_Factor], factor)
+# 创建contr.simple()函数
+source('https://raw.githubusercontent.com/usplos/Eye-movement-related/master/ModelOptimize_Factor.R')
 
-  for(ff in Fix_Factor){
-    contrasts(Data[[ff]]) = contr.simple(length(levels(Data[[ff]])))
+# 创建ModelOptimize_Factor()函数
+ModelOptimize_Factor = function(FormulaManual = NULL,Data, DV, Fix_Factor, Re_Factor,
+                                Family = 'gaussian', criterionPCA = 0.01, MatrixDesign = '*'){
+  if(!require(tidyverse)) install.packages('tidyverse')
+  if(!require(lmerTest)) install.packages('lmerTest')
 
-    cat('For the fixed factor of ', ff, ', the contrasts matrix is:\n')
-    print(contrasts(Data[[ff]]))
-    cat('\n')
+  if(is.null(FormulaManual)){
+    Data[Fix_Factor] = lapply(Data[Fix_Factor], factor)
+    Data[Re_Factor] = lapply(Data[Re_Factor], factor)
+
+    for(ff in Fix_Factor){
+      contrasts(Data[[ff]]) = contr.simple(length(levels(Data[[ff]])))
+
+      cat('For the fixed factor of ', ff, ', the contrasts matrix is:\n')
+      print(contrasts(Data[[ff]]))
+      cat('\n')
+    }
+
+    eval(parse(text = paste0('mmff = model.matrix(~ ',paste0(Fix_Factor,collapse = MatrixDesign),', Data)')))
+
+    IVName = gsub(pattern = ':',replacement = '_',x = colnames(mmff)[2:ncol(mmff)]) %>%
+      substr(x = ., start = 1, stop = nchar(.))
+    Data[IVName] = mmff[,2:ncol(mmff)]
+    RandomSlope = paste('(1 + ',paste(IVName,collapse = ' + '),'||',Re_Factor,')',sep = '')
+    Formula = paste0(DV,' ~ 1 + ', paste(IVName,collapse = ' + '),' + ',
+                     paste(RandomSlope,collapse = ' + '))
+  }else{
+    Formula = FormulaManual
   }
 
-  eval(parse(text = paste0('mmff = model.matrix(~ ',paste0(Fix_Factor,collapse = '/'),', Data)')))
-  #mmff <- model.matrix(~ WholePI/EmbPI, ffRegVerb)
-  #Ncol = ncol(Data)
-  IVName = gsub(pattern = ':',replacement = '_',x = colnames(mmff)[2:ncol(mmff)]) %>%
-    substr(x = ., start = 1, stop = nchar(.))
-  Data[IVName] = mmff[,2:ncol(mmff)]
-  RandomSlope = paste('(',paste(IVName,collapse = ' + '),'||',Re_Factor,')',sep = '')
-  Formula = paste0(DV,' ~ ', paste(IVName,collapse = ' + '),' + ',
-                   paste(RandomSlope,collapse = ' + '))
+
   if(Family == 'gaussian'){
     ModelAll = lmer(formula = as.formula(Formula), data = Data, REML = F,
                     control = lmerControl(optimizer = "bobyqa"))
@@ -30,14 +42,20 @@ ModelOptimize_Factor = function(Data, DV, Fix_Factor, Re_Factor,Family = 'gaussi
     ModelAll = glmer(formula = as.formula(Formula), data = Data, REML = F,
                      control = lmerControl(optimizer = "bobyqa"), family = Family)
   }
-
+  
+  if(!is.null(FormulaManual)){
+    IVName = summary(ModelAll)$coef %>% row.names() %>% .[2:length(.)]
+    DV = strsplit(x = FormulaManual, split = '~',fixed = T,) %>% unlist() %>% .[[1]]
+  }
+  
   PCA_All = summary(rePCA(ModelAll))
   k = 0;
-  for (ii in 1:length(Re_Factor)) {
+  for (ii in 1:length(PCA_All)) {
     k = k + sum(PCA_All[[ii]]$importance[2,] < criterionPCA)
   }
 
   ModelOpt = ModelAll
+  NumLoop = 0
   while (k != 0) {
     VarM = VarCorr(ModelOpt)
     NamesVarM = names(VarM)
@@ -47,18 +65,18 @@ ModelOptimize_Factor = function(Data, DV, Fix_Factor, Re_Factor,Family = 'gaussi
     for(nn in 1:length(Group)){
       #nn=1
       Matrix = eval(parse(text = paste0('VarM$',NamesVarM[[nn]])))
-      Effect[[nn]] = attributes(Matrix)$dimnames[[1]]
+      Effect[[nn]] = attributes(Matrix)$dimnames[[1]] %>% ifelse(test = .=='(Intercept)','1',.)
       Std[[nn]] = attributes(Matrix)$std
     }
 
     StdMatrix = data.frame(Group, Effect, Std)
-    StdMatrix = subset(StdMatrix, Effect != '(Intercept)') %>% arrange(-Std) %>% .[1:(nrow(.)-1),]
+    StdMatrix = StdMatrix %>% arrange(-Std) %>% .[1:(nrow(.)-1),]
 
     RandomSlopeNew = StdMatrix %>% split(.$Group) %>% map_chr(function(df) {
-      paste0('(',paste0(df$Effect, collapse = ' + '),' || ', unique(df$Group),')')
+      df = arrange(df, Effect);paste0('(',paste0(df$Effect, collapse = ' + '),' || ', unique(df$Group),')')
     }) %>% unlist() %>% paste0(collapse = ' + ')
 
-    FormulaNew = paste0(DV,' ~ ', paste(IVName,collapse = ' + '),' + ',
+    FormulaNew = paste0(DV,' ~ 1 + ', paste(IVName,collapse = ' + '),' + ',
                         paste(RandomSlopeNew,collapse = ' + '))
 
 
@@ -74,23 +92,87 @@ ModelOptimize_Factor = function(Data, DV, Fix_Factor, Re_Factor,Family = 'gaussi
 
     PCA_All = summary(rePCA(ModelOpt))
     k = 0;
-    for (ii in 1:length(Re_Factor)) {
+    for (ii in 1:length(PCA_All)) {
       k = k + sum(PCA_All[[ii]]$importance[2,] < criterionPCA)
     }
+    NumLoop = NumLoop+1
   }
 
-  cat('\n\n####################\n\nThe formula of the maximum model was below:\n\n',
-      Formula,'\n\n')
-  cat('The variance correlation matrix of the maximum model was:\n\n')
-  print(VarCorr(ModelAll))
-  cat('\n\n####################\n\n')
+  if(NumLoop > 0){
+    if(is.null(FormulaManual)){
+      cat('\n\n####################\n\nThe formula of the maximum model was below:\n\n',
+          Formula,'\n\n')
+      cat('The variance correlation matrix of the maximum model was:\n\n')
+      print(VarCorr(ModelAll))
+      cat('\n\n####################\n\n')
 
-  cat('HOWEVER, we suggest you use the model with the following formula:\n\n',
-      FormulaNew,'\n\n####################\n\n')
+      cat('HOWEVER, we suggest you use the model with the following formula:\n\n',
+          FormulaNew,'\n\n####################\n\n')
 
-  cat('The differences between the maximum model and the optimized model was calculated with anova() function, and the results were shown:\n\n')
-  print(anova(ModelAll, ModelOpt))
-  cat('\n\n')
+      cat('The differences between the maximum model and the optimized model was calculated with anova() function, and the results were shown:\n\n')
+      print(anova(ModelAll, ModelOpt))
+      cat('\n\n')
 
-  return(Data)
+      return(list(DataNew = Data,
+                  Formula_All = Formula,
+                  Formula_Opt = FormulaNew,
+                  VarCorr_All = VarCorr(ModelAll),
+                  rePCA_All = summary(rePCA(ModelAll)),
+                  VarCorr_Opt = VarCorr(ModelOpt),
+                  rePCA_Opt = summary(rePCA(ModelOpt)),
+                  Model_Compare = anova(ModelAll, ModelOpt),
+                  Summary_ModelOpt = summary(ModelOpt)))
+    }else{
+      cat('\n\n####################\n\nThe formula of the model that you input was below:\n\n',
+          Formula,'\n\n')
+      cat('The variance correlation matrix of the given model was:\n\n')
+      print(VarCorr(ModelAll))
+      cat('\n\n####################\n\n')
+
+      cat('HOWEVER, we suggest you use the model with the following formula:\n\n',
+          FormulaNew,'\n\n####################\n\n')
+
+      cat('The differences between the given model and the optimized model was calculated with anova() function, and the results were shown:\n\n')
+      print(anova(ModelAll, ModelOpt))
+      cat('\n\n')
+
+      return(list(DataNew = Data,
+                  Formula_Giv = Formula,
+                  Formula_Opt = FormulaNew,
+                  VarCorr_Giv = VarCorr(ModelAll),
+                  rePCA_Giv = summary(rePCA(ModelAll)),
+                  VarCorr_Opt = VarCorr(ModelOpt),
+                  rePCA_Opt = summary(rePCA(ModelOpt)),
+                  Model_Compare = anova(ModelAll, ModelOpt),
+                  Summary_ModelOpt = summary(ModelOpt)))
+    }
+
+
+  }else{
+    if(is.null(FormulaManual)){
+      cat('\n\n####################\n\nThe maximum model was the most suggested:\n\n',
+          Formula,'\n\n')
+      cat('The variance correlation matrix of the maximum model was:\n\n')
+      print(VarCorr(ModelAll))
+      cat('\n\n')
+
+      return(list(DataNew = Data,
+                  Formula_All = Formula,
+                  VarCorr_All = VarCorr(ModelAll),
+                  rePCA_All = summary(rePCA(ModelAll)),
+                  Summary_ModelAll = summary(ModelAll)))
+    }else{
+      cat('\n\n####################\n\nThe model that you input was the most suggested:\n\n',
+          Formula,'\n\n')
+      cat('The variance correlation matrix of the given model was:\n\n')
+      print(VarCorr(ModelAll))
+      cat('\n\n')
+
+      return(list(DataNew = Data,
+                  Formula_All = Formula,
+                  VarCorr_All = VarCorr(ModelAll),
+                  rePCA_All = summary(rePCA(ModelAll)),
+                  Summary_ModelAll = summary(ModelAll)))
+    }
+  }
 }
