@@ -1,4 +1,9 @@
 
+# 适用情形：
+## 连续变量–单因素实验设计
+## 连续变量–两因素实验设计
+## 连续变量–三因素实验设计
+
 # 创建contr.simple()函数
 source('https://raw.githubusercontent.com/usplos/Eye-movement-related/master/contr.simple.R')
 
