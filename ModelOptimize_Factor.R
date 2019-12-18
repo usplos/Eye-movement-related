@@ -42,12 +42,12 @@ ModelOptimize_Factor = function(FormulaManual = NULL,Data, DV, Fix_Factor, Re_Fa
     ModelAll = glmer(formula = as.formula(Formula), data = Data, REML = F,
                      control = lmerControl(optimizer = "bobyqa"), family = Family)
   }
-  
+
   if(!is.null(FormulaManual)){
     IVName = summary(ModelAll)$coef %>% row.names() %>% .[2:length(.)]
     DV = strsplit(x = FormulaManual, split = '~',fixed = T,) %>% unlist() %>% .[[1]]
   }
-  
+
   PCA_All = summary(rePCA(ModelAll))
   k = 0;
   for (ii in 1:length(PCA_All)) {
@@ -70,7 +70,10 @@ ModelOptimize_Factor = function(FormulaManual = NULL,Data, DV, Fix_Factor, Re_Fa
     }
 
     StdMatrix = data.frame(Group, Effect, Std)
-    StdMatrix = StdMatrix %>% arrange(-Std) %>% .[1:(nrow(.)-1),]
+    StdMatrixIntercept = subset(StdMatrix, Effect == '1')
+    StdMatrixSlope = subset(StdMatrix, Effect != '1')
+    StdMatrixSlope = StdMatrixSlope %>% arrange(-Std) %>% .[1:(nrow(.)-1),]
+    StdMatrix = bind_rows(StdMatrixIntercept, StdMatrixSlope)
 
     RandomSlopeNew = StdMatrix %>% split(.$Group) %>% map_chr(function(df) {
       df = arrange(df, Effect);paste0('(',paste0(df$Effect, collapse = ' + '),' || ', unique(df$Group),')')
