@@ -14,18 +14,18 @@ ModelMatrix = function(Data, Fix_Factor, MatrixDesign = '*'){
   for(ff in Fix_Factor){
     contrasts(Data[[ff]]) = contr.simple(length(levels(Data[[ff]])))
   }
-  
+
   eval(parse(text = paste0('mmff = model.matrix(~ ',paste0(Fix_Factor,collapse = MatrixDesign),', Data)')))
   IVName = gsub(pattern = ':',replacement = '_',x = colnames(mmff)[2:ncol(mmff)]) %>%
     substr(x = ., start = 1, stop = nchar(.))
   Data[IVName] = mmff[,2:ncol(mmff)]
-  
+
   return(Data)
 }
 
 # 创建ModelOptimize_Factor()函数
 ModelOptimize_Factor = function(FormulaManual = NULL,Data, DV, Fix_Factor, Re_Factor,
-                                Family = 'gaussian', criterionPCA = 0.01, MatrixDesign = '*'){
+                                Family = 'gaussian', criterionPCA = 0.01, MatrixDesign = '*', REML = F){
   if(!require(tidyverse)) install.packages('tidyverse')
   if(!require(lmerTest)) install.packages('lmerTest')
 
@@ -55,13 +55,13 @@ ModelOptimize_Factor = function(FormulaManual = NULL,Data, DV, Fix_Factor, Re_Fa
 
 
   if(Family == 'gaussian'){
-    ModelAll = lmer(formula = as.formula(Formula), data = Data, REML = F,
+    ModelAll = lmer(formula = as.formula(Formula), data = Data, REML = REML,
                     control = lmerControl(optimizer = "bobyqa"))
 
 
   }else{
-    ModelAll = glmer(formula = as.formula(Formula), data = Data, REML = F,
-                     control = lmerControl(optimizer = "bobyqa"), family = Family)
+    ModelAll = glmer(formula = as.formula(Formula), data = Data, REML = REML,
+                     control = glmerControl(optimizer = "bobyqa"), family = Family)
   }
 
   if(!is.null(FormulaManual)){
@@ -97,7 +97,7 @@ ModelOptimize_Factor = function(FormulaManual = NULL,Data, DV, Fix_Factor, Re_Fa
     StdMatrix = bind_rows(StdMatrixIntercept, StdMatrixSlope)
 
     RandomSlopeNew = StdMatrix %>% split(.$Group) %>% map_chr(function(df) {
-      df = arrange(df, Effect);paste0('(',paste0(df$Effect, collapse = ' + '),' || ', unique(df$Group),')')
+      df = arrange(df, Effect);paste0('(',paste0(df$Effect, collapse = ' + '), ifelse(length(df$Effect) == 1,' | ',' || '), unique(df$Group),')')
     }) %>% unlist() %>% paste0(collapse = ' + ')
 
     FormulaNew = paste0(DV,' ~ 1 + ', paste(IVName,collapse = ' + '),' + ',
@@ -105,13 +105,13 @@ ModelOptimize_Factor = function(FormulaManual = NULL,Data, DV, Fix_Factor, Re_Fa
 
 
     if(Family == 'gaussian'){
-      ModelOpt = lmer(formula = as.formula(FormulaNew), data = Data, REML = F,
+      ModelOpt = lmer(formula = as.formula(FormulaNew), data = Data, REML = REML,
                       control = lmerControl(optimizer = "bobyqa"))
 
 
     }else{
-      ModelOpt = glmer(formula = as.formula(FormulaNew), data = Data, REML = F,
-                       control = lmerControl(optimizer = "bobyqa"), family = Family)
+      ModelOpt = glmer(formula = as.formula(FormulaNew), data = Data, REML = REML,
+                       control = glmerControl(optimizer = "bobyqa"), family = Family)
     }
 
     PCA_All = summary(rePCA(ModelOpt))
@@ -200,3 +200,4 @@ ModelOptimize_Factor = function(FormulaManual = NULL,Data, DV, Fix_Factor, Re_Fa
     }
   }
 }
+
