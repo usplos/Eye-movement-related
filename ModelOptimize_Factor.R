@@ -5,6 +5,7 @@
 ## 因变量为连续变量–三因素实验设计
 ## 因变量为二分变量–单因素实验设计(注意此时criterionPCA参数可能需要设置地更小一点，比如0.005 或 0.001)
 ## 因变量为二分变量-两因素实验设计
+## 因变量为计数变量-两因素实验设计
 
 # 创建contr.simple()函数
 source('https://raw.githubusercontent.com/usplos/Eye-movement-related/master/contr.simple.R')
