@@ -22,9 +22,3 @@ MixedModel()
 ```
 MixedModelDataSummary()
 ```
-
-## 作图函数
-```
-MixedModelPlot()
-```
-
