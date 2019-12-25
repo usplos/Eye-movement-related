@@ -1,4 +1,4 @@
-ModelOptimize_Factor = function(FormulaManual = NULL,Data, DV, Fix_Factor, Re_Factor,
+MixedModelOpt = function(FormulaManual = NULL,Data, DV, Fix_Factor, Re_Factor,
                                 Family = 'gaussian', criterionPCA = 0.01, MatrixDesign = '*', REML = F){
   # 创建contr.simple()函数
   source('https://raw.githubusercontent.com/usplos/Eye-movement-related/master/Mixed%20Model%20Functions/contr.simple.R')
