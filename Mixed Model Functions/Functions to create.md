@@ -18,6 +18,11 @@ PowerAnalysis()
 MixedModel()
 ```
 
+## 描述统计函数
+```
+MixedModelDataSummary()
+```
+
 ## 作图函数
 ```
 MixedModelPlot()
