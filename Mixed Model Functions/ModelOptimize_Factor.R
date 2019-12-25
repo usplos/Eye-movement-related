@@ -1,31 +1,3 @@
-
-# 适用情形（持续更新中……）：
-## 因变量为连续变量–单因素实验设计
-## 因变量为连续变量–两因素实验设计
-## 因变量为连续变量–三因素实验设计
-## 因变量为二分变量–单因素实验设计(注意此时criterionPCA参数可能需要设置地更小一点，比如0.005 或 0.001)
-## 因变量为二分变量-两因素实验设计
-## 因变量为计数变量-两因素实验设计
-
-# 创建contr.simple()函数
-source('https://raw.githubusercontent.com/usplos/Eye-movement-related/master/contr.simple.R')
-
-# 创建生成虚拟变量的函数
-ModelMatrix = function(Data, Fix_Factor, MatrixDesign = '*'){
-  Data[Fix_Factor] = lapply(Data[Fix_Factor], factor)
-  for(ff in Fix_Factor){
-    contrasts(Data[[ff]]) = contr.simple(length(levels(Data[[ff]])))
-  }
-
-  eval(parse(text = paste0('mmff = model.matrix(~ ',paste0(Fix_Factor,collapse = MatrixDesign),', Data)')))
-  IVName = gsub(pattern = ':',replacement = '_',x = colnames(mmff)[2:ncol(mmff)]) %>%
-    substr(x = ., start = 1, stop = nchar(.))
-  Data[IVName] = mmff[,2:ncol(mmff)]
-
-  return(Data)
-}
-
-# 创建ModelOptimize_Factor()函数
 ModelOptimize_Factor = function(FormulaManual = NULL,Data, DV, Fix_Factor, Re_Factor,
                                 Family = 'gaussian', criterionPCA = 0.01, MatrixDesign = '*', REML = F){
 
