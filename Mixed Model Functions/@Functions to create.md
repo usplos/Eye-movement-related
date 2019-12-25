@@ -1,21 +1,21 @@
 ## 生成虚拟变量的函数
 ```
-ModelMatrix()
+MixedModelDummy()
 ```
 
 ## 模型优化的函数
 ```
-ModelOptimize_Factor()
+MixedModelOpt()
 ```
 
 ## power分析的函数
 ```
-PowerAnalysis()
+MixedModelPower()
 ```
 
 ## 整合函数(模型优化+power分析+模型结果)
 ```
-MixedModel()
+MixedModelOptPower()
 ```
 
 ## 描述统计函数
