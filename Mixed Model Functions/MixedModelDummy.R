@@ -1,4 +1,4 @@
-ModelMatrix = function(Data, Fix_Factor, MatrixDesign = '*'){
+MixedModelDummy = function(Data, Fix_Factor, MatrixDesign = '*'){
   Fix_Factor = Fix_Factor %>% strsplit(split = ',', fixed = T) %>% unlist()
   Data[Fix_Factor] = lapply(Data[Fix_Factor], factor)
   for(ff in Fix_Factor){
