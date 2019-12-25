@@ -1,4 +1,4 @@
-MixedModelOpt_and_Power = function(
+MixedModelOptPower = function(
   FormulaManual = NULL,Data, DV, Fix_Factor, Re_Factor,
   Family = 'gaussian', criterionPCA = 0.01, MatrixDesign = '*', REML = F,
   Methods = 't', Nsim = 500,
