@@ -49,7 +49,7 @@ ModelOptimize_Factor = function(FormulaManual = NULL,Data, DV, Fix_Factor, Re_Fa
   PCA_All = summary(rePCA(ModelAll))
   k = 0;
   for (ii in 1:length(PCA_All)) {
-    k = k + sum(PCA_All[[ii]]$importance[2,] < criterionPCA)
+    k = k + ifelse(length(PCA_All[[ii]]$importance[2,]) > 1, sum(PCA_All[[ii]]$importance[2,] < criterionPCA),0)
   }
 
   ModelOpt = ModelAll
@@ -92,7 +92,7 @@ ModelOptimize_Factor = function(FormulaManual = NULL,Data, DV, Fix_Factor, Re_Fa
     PCA_All = summary(rePCA(ModelOpt))
     k = 0;
     for (ii in 1:length(PCA_All)) {
-      k = k + sum(PCA_All[[ii]]$importance[2,] < criterionPCA)
+      k = k + ifelse(length(PCA_All[[ii]]$importance[2,]) > 1, sum(PCA_All[[ii]]$importance[2,] < criterionPCA),0)
     }
     NumLoop = NumLoop+1
     if(nrow(StdMatrixSlope) == 0){
