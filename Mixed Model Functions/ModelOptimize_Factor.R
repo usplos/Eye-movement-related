@@ -70,7 +70,7 @@ ModelOptimize_Factor = function(FormulaManual = NULL,Data, DV, Fix_Factor, Re_Fa
     StdMatrix = data.frame(Group, Effect, Std)
     StdMatrixIntercept = subset(StdMatrix, Effect == '1')
     StdMatrixSlope = subset(StdMatrix, Effect != '1')
-    StdMatrixSlope = StdMatrixSlope %>% arrange(-Std) %>% .[1:(nrow(.)-1),]
+    StdMatrixSlope = StdMatrixSlope %>% arrange(-Std) %>% .[-c(nrow(.)),]
     StdMatrix = bind_rows(StdMatrixIntercept, StdMatrixSlope)
 
     RandomSlopeNew = StdMatrix %>% split(.$Group) %>% map_chr(function(df) {
@@ -95,6 +95,9 @@ ModelOptimize_Factor = function(FormulaManual = NULL,Data, DV, Fix_Factor, Re_Fa
       k = k + sum(PCA_All[[ii]]$importance[2,] < criterionPCA)
     }
     NumLoop = NumLoop+1
+    if(nrow(StdMatrixSlope) == 0){
+      k=0
+    }
   }
 
   if(NumLoop > 0){
