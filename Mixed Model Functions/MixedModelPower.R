@@ -1,4 +1,4 @@
-PowerAnalysis = function(Model, FixEffect = NULL, Methods = 't', Nsim = 100,
+MixedModelPower = function(Model, FixEffect = NULL, Methods = 't', Nsim = 100,
                          Along = NULL, maxNumber = NULL, Breaks = NULL){
   library(simr)
   PowerList = list()
