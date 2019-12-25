@@ -28,10 +28,13 @@ ModelMatrix = function(Data, Fix_Factor, MatrixDesign = '*'){
 # 创建ModelOptimize_Factor()函数
 ModelOptimize_Factor = function(FormulaManual = NULL,Data, DV, Fix_Factor, Re_Factor,
                                 Family = 'gaussian', criterionPCA = 0.01, MatrixDesign = '*', REML = F){
+
   if(!require(tidyverse)) install.packages('tidyverse')
   if(!require(lmerTest)) install.packages('lmerTest')
 
   if(is.null(FormulaManual)){
+    Fix_Factor = Fix_Factor %>% gsub(pattern = ' ',replacement = '',x = .) %>% strsplit(split = ',', fixed = T) %>% unlist()
+    Re_Factor = Re_Factor %>% gsub(pattern = ' ',replacement = '',x = .) %>% strsplit(split = ',', fixed = T) %>% unlist()
     Data[Fix_Factor] = lapply(Data[Fix_Factor], factor)
     Data[Re_Factor] = lapply(Data[Re_Factor], factor)
 
@@ -57,13 +60,11 @@ ModelOptimize_Factor = function(FormulaManual = NULL,Data, DV, Fix_Factor, Re_Fa
 
 
   if(Family == 'gaussian'){
-    ModelAll = lmer(formula = as.formula(Formula), data = Data, REML = REML,
-                    control = lmerControl(optimizer = "bobyqa"))
-
-
+    ModelAll = eval(parse(text = paste0('lmer(formula = ',Formula,', data = Data, REML = REML,',
+                                        'control = lmerControl(optimizer = \'bobyqa\'))')))
   }else{
-    ModelAll = glmer(formula = as.formula(Formula), data = Data, REML = REML,
-                     control = glmerControl(optimizer = "bobyqa"), family = Family)
+    ModelAll = eval(parse(text = paste0('glmer(formula = ',Formula,', data = Data, REML = REML,',
+                                        'control = glmerControl(optimizer = \'bobyqa\'), family = Family)')))
   }
 
   if(!is.null(FormulaManual)){
@@ -107,13 +108,11 @@ ModelOptimize_Factor = function(FormulaManual = NULL,Data, DV, Fix_Factor, Re_Fa
 
 
     if(Family == 'gaussian'){
-      ModelOpt = lmer(formula = as.formula(FormulaNew), data = Data, REML = REML,
-                      control = lmerControl(optimizer = "bobyqa"))
-
-
+      ModelOpt = eval(parse(text = paste0('lmer(formula = ',FormulaNew,', data = Data, REML = REML,',
+                                          'control = lmerControl(optimizer = \'bobyqa\'))')))
     }else{
-      ModelOpt = glmer(formula = as.formula(FormulaNew), data = Data, REML = REML,
-                       control = glmerControl(optimizer = "bobyqa"), family = Family)
+      ModelOpt = eval(parse(text = paste0('glmer(formula = ',FormulaNew,', data = Data, REML = REML,',
+                                          'control = glmerControl(optimizer = \'bobyqa\'), family = Family)')))
     }
 
     PCA_All = summary(rePCA(ModelOpt))
@@ -147,7 +146,9 @@ ModelOptimize_Factor = function(FormulaManual = NULL,Data, DV, Fix_Factor, Re_Fa
                   VarCorr_Opt = VarCorr(ModelOpt),
                   rePCA_Opt = summary(rePCA(ModelOpt)),
                   Model_Compare = anova(ModelAll, ModelOpt),
-                  Summary_ModelOpt = summary(ModelOpt)))
+                  ModelOpt = ModelOpt,
+                  Summary_ModelOpt = summary(ModelOpt),
+                  ANOVA_ModelOpt = anova(ModelOpt)))
     }else{
       cat('\n\n####################\n\nThe formula of the model that you input was below:\n\n',
           Formula,'\n\n')
@@ -170,7 +171,9 @@ ModelOptimize_Factor = function(FormulaManual = NULL,Data, DV, Fix_Factor, Re_Fa
                   VarCorr_Opt = VarCorr(ModelOpt),
                   rePCA_Opt = summary(rePCA(ModelOpt)),
                   Model_Compare = anova(ModelAll, ModelOpt),
-                  Summary_ModelOpt = summary(ModelOpt)))
+                  ModelOpt = ModelOpt,
+                  Summary_ModelOpt = summary(ModelOpt),
+                  ANOVA_ModelOpt = anova(ModelOpt)))
     }
 
 
@@ -184,9 +187,11 @@ ModelOptimize_Factor = function(FormulaManual = NULL,Data, DV, Fix_Factor, Re_Fa
 
       return(list(DataNew = Data,
                   Formula_All = Formula,
-                  VarCorr_All = VarCorr(ModelAll),
-                  rePCA_All = summary(rePCA(ModelAll)),
-                  Summary_ModelAll = summary(ModelAll)))
+                  VarCorr_All = VarCorr(ModelOpt),
+                  rePCA_All = summary(rePCA(ModelOpt)),
+                  ModelOpt = ModelOpt,
+                  Summary_ModelAll = summary(ModelOpt),
+                  ANOVA_ModelOpt = anova(ModelOpt)))
     }else{
       cat('\n\n####################\n\nThe model that you input was the most suggested:\n\n',
           Formula,'\n\n')
@@ -196,10 +201,11 @@ ModelOptimize_Factor = function(FormulaManual = NULL,Data, DV, Fix_Factor, Re_Fa
 
       return(list(DataNew = Data,
                   Formula_All = Formula,
-                  VarCorr_All = VarCorr(ModelAll),
-                  rePCA_All = summary(rePCA(ModelAll)),
-                  Summary_ModelAll = summary(ModelAll)))
+                  VarCorr_All = VarCorr(ModelOpt),
+                  rePCA_All = summary(rePCA(ModelOpt)),
+                  ModelOpt = ModelOpt,
+                  Summary_ModelAll = summary(ModelOpt),
+                  ANOVA_ModelOpt = anova(ModelOpt)))
     }
   }
 }
-
